@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    name: Build & Publish Release APK
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # needed to create GitHub Releases
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history for changelog generation
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 'stable'
+          channel: stable
+          cache: true
+
+      - name: Create android/local.properties
+        run: |
+          FLUTTER_SDK=$(dirname $(dirname $(which flutter)))
+          echo "flutter.sdk=$FLUTTER_SDK" > android/local.properties
+          echo "sdk.dir=$ANDROID_SDK_ROOT" >> android/local.properties
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze --fatal-infos
+
+      - name: Build release APK
+        run: flutter build apk --release
+
+      - name: Rename APK
+        run: |
+          mkdir -p dist
+          cp build/app/outputs/flutter-apk/app-release.apk dist/QRSnap-${{ github.ref_name }}.apk
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: QRSnap ${{ github.ref_name }}
+          generate_release_notes: true
+          files: dist/QRSnap-${{ github.ref_name }}.apk
+          body: |
+            ## QRSnap ${{ github.ref_name }}
+
+            ### Install
+            1. Download `QRSnap-${{ github.ref_name }}.apk` below
+            2. On your Android device, enable **Install from unknown sources**
+            3. Open the APK to install
+
+            > Built with Flutter stable · Android minSdk 21
