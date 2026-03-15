@@ -11,7 +11,7 @@ class ScanResult extends HiveObject {
   final DateTime scannedAt;
 
   @HiveField(2)
-  final String type; // 'url' | 'text' | 'email' | 'phone' | 'other'
+  final String type; // 'url' | 'text' | 'email' | 'phone'
 
   ScanResult({
     required this.content,
@@ -19,14 +19,16 @@ class ScanResult extends HiveObject {
     required this.type,
   });
 
+  static final _emailRegExp = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
+  static final _phoneRegExp = RegExp(r'^\+?[\d\s\-()]{7,}$');
+
   static String detectType(String content) {
     if (content.startsWith('http://') || content.startsWith('https://')) {
       return 'url';
     } else if (content.startsWith('mailto:') ||
-        RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(content)) {
+        _emailRegExp.hasMatch(content)) {
       return 'email';
-    } else if (content.startsWith('tel:') ||
-        RegExp(r'^\+?[\d\s\-()]{7,}$').hasMatch(content)) {
+    } else if (content.startsWith('tel:') || _phoneRegExp.hasMatch(content)) {
       return 'phone';
     }
     return 'text';

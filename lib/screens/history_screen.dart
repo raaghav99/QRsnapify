@@ -116,13 +116,6 @@ class _HistoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final icon = switch (item.type) {
-      'url' => Icons.link_outlined,
-      'email' => Icons.email_outlined,
-      'phone' => Icons.phone_outlined,
-      _ => Icons.text_fields_outlined,
-    };
-
     return Dismissible(
       key: Key(item.key.toString()),
       direction: DismissDirection.endToStart,
@@ -152,7 +145,7 @@ class _HistoryCard extends StatelessWidget {
                   color: kPrimary.withOpacity(0.08),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(icon, size: 18, color: kPrimary),
+                child: Icon(iconForScanType(item.type), size: 18, color: kPrimary),
               ),
               const SizedBox(width: 12),
               Expanded(

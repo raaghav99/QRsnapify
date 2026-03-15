@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -26,6 +27,11 @@ class _GeneratorScreenState extends State<GeneratorScreen> {
   final _qrKey = GlobalKey();
   bool _saving = false;
 
+  /// Debounced QR data — updated 350 ms after the user stops typing to avoid
+  /// re-encoding the QR matrix on every keystroke.
+  String _debouncedQrData = '';
+  Timer? _debounce;
+
   String get _hint => switch (_selectedType) {
         QrType.url => 'https://example.com',
         QrType.text => 'Enter any text',
@@ -33,6 +39,7 @@ class _GeneratorScreenState extends State<GeneratorScreen> {
         QrType.phone => '+1 555 000 0000',
       };
 
+  /// Live QR data used at save time (no debounce needed there).
   String get _qrData {
     final val = _controller.text.trim();
     if (val.isEmpty) return '';
@@ -43,8 +50,16 @@ class _GeneratorScreenState extends State<GeneratorScreen> {
     };
   }
 
+  void _onTextChanged(String _) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 350), () {
+      if (mounted) setState(() => _debouncedQrData = _qrData);
+    });
+  }
+
   @override
   void dispose() {
+    _debounce?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -74,12 +89,13 @@ class _GeneratorScreenState extends State<GeneratorScreen> {
                 onChanged: (t) => setState(() {
                   _selectedType = t;
                   _controller.clear();
+                  _debouncedQrData = '';
                 }),
               ),
               const SizedBox(height: 20),
               TextField(
                 controller: _controller,
-                onChanged: (_) => setState(() {}),
+                onChanged: _onTextChanged,
                 keyboardType: switch (_selectedType) {
                   QrType.url => TextInputType.url,
                   QrType.email => TextInputType.emailAddress,
@@ -92,7 +108,7 @@ class _GeneratorScreenState extends State<GeneratorScreen> {
                 ),
               ),
               const SizedBox(height: 28),
-              if (_qrData.isNotEmpty) ...[
+              if (_debouncedQrData.isNotEmpty) ...[
                 Center(
                   child: RepaintBoundary(
                     key: _qrKey,
@@ -110,7 +126,7 @@ class _GeneratorScreenState extends State<GeneratorScreen> {
                         ],
                       ),
                       child: QrImageView(
-                        data: _qrData,
+                        data: _debouncedQrData,
                         version: QrVersions.auto,
                         size: 220,
                         backgroundColor: kSurface,
@@ -144,11 +160,15 @@ class _GeneratorScreenState extends State<GeneratorScreen> {
   Future<void> _saveAndShare() async {
     setState(() => _saving = true);
     try {
-      final boundary = _qrKey.currentContext!.findRenderObject()
-          as RenderRepaintBoundary;
+      final ctx = _qrKey.currentContext;
+      if (ctx == null) return;
+      final boundary = ctx.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary == null) return;
+
       final image = await boundary.toImage(pixelRatio: 3.0);
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-      final bytes = byteData!.buffer.asUint8List();
+      if (byteData == null) return;
+      final bytes = byteData.buffer.asUint8List();
 
       final dir = await getTemporaryDirectory();
       final file = File('${dir.path}/qrsnap_${DateTime.now().millisecondsSinceEpoch}.png');
@@ -158,10 +178,10 @@ class _GeneratorScreenState extends State<GeneratorScreen> {
         [XFile(file.path)],
         text: 'QR code generated with QRSnap',
       );
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save: $e')),
+          const SnackBar(content: Text('Could not save QR code. Please try again.')),
         );
       }
     } finally {

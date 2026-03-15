@@ -26,6 +26,13 @@ class AdaptiveButton extends ConsumerWidget {
     final height = ref.watch(buttonHeightProvider);
     final notifier = ref.read(buttonHeightProvider.notifier);
 
+    final buttonStyle = FilledButton.styleFrom(
+      minimumSize: Size(width, height),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(kButtonRadius),
+      ),
+    );
+
     return Listener(
       onPointerDown: (event) {
         // event.radiusMajor is the contact radius in logical pixels
@@ -42,21 +49,11 @@ class AdaptiveButton extends ConsumerWidget {
                 onPressed: onPressed,
                 icon: Icon(icon, size: 20),
                 label: Text(label),
-                style: FilledButton.styleFrom(
-                  minimumSize: Size(width, height),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(kButtonRadius),
-                  ),
-                ),
+                style: buttonStyle,
               )
             : FilledButton(
                 onPressed: onPressed,
-                style: FilledButton.styleFrom(
-                  minimumSize: Size(width, height),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(kButtonRadius),
-                  ),
-                ),
+                style: buttonStyle,
                 child: Text(label),
               ),
       ),

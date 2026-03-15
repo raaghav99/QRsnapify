@@ -56,7 +56,7 @@ class QrResultSheet extends StatelessWidget {
             const SizedBox(height: 20),
             Row(
               children: [
-                _typeIcon(),
+                Icon(iconForScanType(type), size: 16, color: kPrimary),
                 const SizedBox(width: 8),
                 Text(
                   _typeLabel(),
@@ -92,14 +92,14 @@ class QrResultSheet extends StatelessWidget {
                 _ActionChip(
                   icon: Icons.share_outlined,
                   label: 'Share',
-                  onTap: _share,
+                  onTap: () => _share(context),
                 ),
                 if (type == 'url') ...[
                   const SizedBox(width: 8),
                   _ActionChip(
                     icon: Icons.open_in_new_outlined,
                     label: 'Open',
-                    onTap: _openUrl,
+                    onTap: () => _openUrl(context),
                     primary: true,
                   ),
                 ],
@@ -111,16 +111,6 @@ class QrResultSheet extends StatelessWidget {
     );
   }
 
-  Widget _typeIcon() {
-    final iconData = switch (type) {
-      'url' => Icons.link_outlined,
-      'email' => Icons.email_outlined,
-      'phone' => Icons.phone_outlined,
-      _ => Icons.text_fields_outlined,
-    };
-    return Icon(iconData, size: 16, color: kPrimary);
-  }
-
   String _typeLabel() => switch (type) {
         'url' => 'URL',
         'email' => 'EMAIL',
@@ -130,6 +120,7 @@ class QrResultSheet extends StatelessWidget {
 
   void _copy(BuildContext context) {
     Clipboard.setData(ClipboardData(text: content));
+    if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Copied to clipboard'),
@@ -140,12 +131,26 @@ class QrResultSheet extends StatelessWidget {
     Navigator.pop(context);
   }
 
-  void _share() {
-    Share.share(content);
+  Future<void> _share(BuildContext context) async {
+    await Share.share(content);
   }
 
-  void _openUrl() {
-    launchUrl(Uri.parse(content), mode: LaunchMode.externalApplication);
+  Future<void> _openUrl(BuildContext context) async {
+    final uri = Uri.tryParse(content);
+    if (uri == null) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Invalid URL')),
+        );
+      }
+      return;
+    }
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open link')),
+      );
+    }
   }
 }
 
