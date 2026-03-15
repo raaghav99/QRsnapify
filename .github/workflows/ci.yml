@@ -37,7 +37,17 @@ jobs:
         run: flutter pub get
 
       - name: Analyze
-        run: flutter analyze
+        run: |
+          flutter analyze 2>&1 | tee /tmp/flutter_analyze.log
+          exit ${PIPESTATUS[0]}
+
+      - name: Upload analyze log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-analyze-log
+          path: /tmp/flutter_analyze.log
+          retention-days: 1
 
       - name: Test
         run: flutter test
