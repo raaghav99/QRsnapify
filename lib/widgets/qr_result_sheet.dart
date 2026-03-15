@@ -151,6 +151,7 @@ class QrResultSheet extends StatelessWidget {
 
 class _ActionChip extends StatelessWidget {
   const _ActionChip({
+    super.key,
     required this.icon,
     required this.label,
     required this.onTap,

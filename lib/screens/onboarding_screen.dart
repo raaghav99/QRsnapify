@@ -71,7 +71,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
+                    const Text(
                       'We use this to adjust text size for comfort.',
                       style: TextStyle(
                         fontSize: 13,
@@ -101,8 +101,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('13', style: TextStyle(color: kSubtitle, fontSize: 12)),
-                        Text('90', style: TextStyle(color: kSubtitle, fontSize: 12)),
+                        const Text('13', style: TextStyle(color: kSubtitle, fontSize: 12)),
+                        const Text('90', style: TextStyle(color: kSubtitle, fontSize: 12)),
                       ],
                     ),
                   ],

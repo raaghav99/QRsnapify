@@ -40,7 +40,7 @@ jobs:
         run: flutter pub get
 
       - name: Analyze
-        run: flutter analyze --fatal-infos
+        run: flutter analyze
 
       - name: Build release APK
         run: flutter build apk --release

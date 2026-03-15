@@ -92,7 +92,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
             return _buildPermissionDenied();
           },
         ),
-        _ScanOverlay(),
+        const _ScanOverlay(),
         Positioned(
           bottom: 40,
           left: 0,
@@ -190,6 +190,8 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
 }
 
 class _ScanOverlay extends StatelessWidget {
+  const _ScanOverlay({super.key});
+
   @override
   Widget build(BuildContext context) {
     return CustomPaint(

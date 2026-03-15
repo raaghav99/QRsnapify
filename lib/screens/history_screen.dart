@@ -105,6 +105,7 @@ class HistoryScreen extends ConsumerWidget {
 
 class _HistoryCard extends StatelessWidget {
   const _HistoryCard({
+    super.key,
     required this.item,
     required this.onDismissed,
     required this.onTap,
@@ -149,7 +150,7 @@ class _HistoryCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: kPrimary.withOpacity(0.08),
+                  color: kPrimary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, size: 18, color: kPrimary),

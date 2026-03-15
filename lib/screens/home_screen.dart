@@ -31,7 +31,7 @@ class HomeScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 8),
-              _HeroCard().animate().fadeIn(duration: kAnimNormal),
+              const _HeroCard().animate().fadeIn(duration: kAnimNormal),
               const SizedBox(height: 24),
               const Text(
                 'Quick actions',
@@ -99,6 +99,8 @@ class HomeScreen extends ConsumerWidget {
 }
 
 class _HeroCard extends StatelessWidget {
+  const _HeroCard({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -142,6 +144,7 @@ class _HeroCard extends StatelessWidget {
 
 class _HistoryTile extends StatelessWidget {
   const _HistoryTile({
+    super.key,
     required this.content,
     required this.type,
     required this.time,
@@ -171,7 +174,7 @@ class _HistoryTile extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: kPrimary.withOpacity(0.08),
+              color: kPrimary.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, size: 18, color: kPrimary),
