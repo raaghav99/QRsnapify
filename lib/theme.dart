@@ -42,7 +42,7 @@ ThemeData buildAppTheme() {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.all(Radius.circular(kCardRadius)),
       ),
-      surfaceColor: kSurface,
+      color: kSurface,
     ),
     appBarTheme: const AppBarTheme(
       backgroundColor: kBackground,
