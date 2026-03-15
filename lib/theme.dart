@@ -31,7 +31,6 @@ ThemeData buildAppTheme() {
     colorScheme: ColorScheme.fromSeed(
       seedColor: kPrimary,
       brightness: Brightness.light,
-      background: kBackground,
       surface: kSurface,
       primary: kPrimary,
       onPrimary: kOnPrimary,
@@ -43,7 +42,7 @@ ThemeData buildAppTheme() {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.all(Radius.circular(kCardRadius)),
       ),
-      color: kSurface,
+      surfaceColor: kSurface,
     ),
     appBarTheme: const AppBarTheme(
       backgroundColor: kBackground,
