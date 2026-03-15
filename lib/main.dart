@@ -23,7 +23,7 @@ void main() async {
       overrides: [
         sharedPrefsProvider.overrideWithValue(prefs),
       ],
-      child: QRSnapApp(prefs: prefs),
+      child: const QRSnapApp(),
     ),
   );
 }

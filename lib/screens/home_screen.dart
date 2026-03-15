@@ -11,7 +11,7 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final history = ref.watch(historyProvider);
+    final history = ref.watch(recentHistoryProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -77,7 +77,7 @@ class HomeScreen extends ConsumerWidget {
                 const SizedBox(height: 8),
                 Expanded(
                   child: ListView.separated(
-                    itemCount: history.length.clamp(0, 5),
+                    itemCount: history.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 8),
                     itemBuilder: (context, i) {
                       final item = history[i];
@@ -153,13 +153,6 @@ class _HistoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final icon = switch (type) {
-      'url' => Icons.link_outlined,
-      'email' => Icons.email_outlined,
-      'phone' => Icons.phone_outlined,
-      _ => Icons.text_fields_outlined,
-    };
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
@@ -174,7 +167,7 @@ class _HistoryTile extends StatelessWidget {
               color: kPrimary.withOpacity(0.08),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, size: 18, color: kPrimary),
+            child: Icon(iconForScanType(type), size: 18, color: kPrimary),
           ),
           const SizedBox(width: 12),
           Expanded(

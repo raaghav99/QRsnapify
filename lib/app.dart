@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'providers/settings_provider.dart';
 import 'screens/generator_screen.dart';
@@ -11,9 +10,7 @@ import 'screens/scanner_screen.dart';
 import 'theme.dart';
 
 class QRSnapApp extends ConsumerWidget {
-  const QRSnapApp({super.key, required this.prefs});
-
-  final SharedPreferences prefs;
+  const QRSnapApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -29,7 +26,7 @@ class QRSnapApp extends ConsumerWidget {
         debugShowCheckedModeBanner: false,
         initialRoute: _initialRoute(ref),
         routes: {
-          '/': (ctx) => const OnboardingScreen(),
+          '/': (ctx) => const HomeScreen(),
           '/onboarding': (ctx) => const OnboardingScreen(),
           '/home': (ctx) => const HomeScreen(),
           '/scanner': (ctx) => const ScannerScreen(),

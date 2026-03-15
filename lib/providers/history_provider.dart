@@ -15,24 +15,33 @@ final historyProvider =
   return HistoryNotifier(box);
 });
 
+/// Top-5 slice used by HomeScreen — avoids rebuilding the full list.
+final recentHistoryProvider = Provider<List<ScanResult>>((ref) {
+  return ref.watch(historyProvider).take(5).toList();
+});
+
 class HistoryNotifier extends StateNotifier<List<ScanResult>> {
   HistoryNotifier(this._box) : super(_box.values.toList().reversed.toList());
 
   final Box<ScanResult> _box;
 
-  Future<void> add(String content) async {
+  /// Persists [content] as a new scan entry and returns the created record.
+  Future<ScanResult> add(String content) async {
     final result = ScanResult(
       content: content,
       scannedAt: DateTime.now(),
       type: ScanResult.detectType(content),
     );
     await _box.add(result);
-    state = _box.values.toList().reversed.toList();
+    // Prepend to avoid re-reading the entire box on every add.
+    state = [result, ...state];
+    return result;
   }
 
   Future<void> remove(ScanResult result) async {
     await result.delete();
-    state = _box.values.toList().reversed.toList();
+    // Filter in-memory state instead of re-reading the box.
+    state = state.where((r) => r.key != result.key).toList();
   }
 
   Future<void> clear() async {

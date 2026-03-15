@@ -24,6 +24,14 @@ const kMaxButtonHeight = 72.0;
 const kAnimFast = Duration(milliseconds: 200);
 const kAnimNormal = Duration(milliseconds: 300);
 
+// ── Scan type icon ────────────────────────────────────────────────────────────
+IconData iconForScanType(String type) => switch (type) {
+      'url' => Icons.link_outlined,
+      'email' => Icons.email_outlined,
+      'phone' => Icons.phone_outlined,
+      _ => Icons.text_fields_outlined,
+    };
+
 // ── Theme ─────────────────────────────────────────────────────────────────────
 ThemeData buildAppTheme() {
   return ThemeData(

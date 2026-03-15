@@ -16,6 +16,8 @@ class ScannerScreen extends ConsumerStatefulWidget {
 class _ScannerScreenState extends ConsumerState<ScannerScreen> {
   MobileScannerController? _controller;
   bool _hasPermission = true;
+  // Not a rendering flag — used only as an async guard to prevent double-scans.
+  // Intentionally mutated without setState since no UI depends on it directly.
   bool _scanned = false;
   bool _torchOn = false;
 
@@ -26,12 +28,15 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
   }
 
   void _initController() {
+    // Only controller creation failures are caught here. Permission errors are
+    // handled in errorBuilder, which is the authoritative source for that state.
     try {
       _controller = MobileScannerController(
         detectionSpeed: DetectionSpeed.noDuplicates,
         facing: CameraFacing.back,
       );
     } catch (_) {
+      // Device has no usable camera (not a permission issue).
       setState(() => _hasPermission = false);
     }
   }
@@ -56,9 +61,10 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
         actions: [
           if (_controller != null)
             IconButton(
+              // Colour change communicates current torch state to the user.
               icon: Icon(
                 _torchOn ? Icons.flash_on : Icons.flash_off,
-                color: Colors.white,
+                color: _torchOn ? Colors.yellow : Colors.white,
               ),
               onPressed: () {
                 _controller?.toggleTorch();
@@ -84,7 +90,9 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
           controller: _controller!,
           onDetect: _onDetect,
           errorBuilder: (context, error, _) {
-            if (error.errorCode == MobileScannerErrorCode.permissionDenied) {
+            if (error.errorCode == MobileScannerErrorCode.permissionDenied &&
+                _hasPermission) {
+              // Schedule the state update for after the current build frame.
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (mounted) setState(() => _hasPermission = false);
               });
@@ -92,7 +100,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
             return _buildPermissionDenied();
           },
         ),
-        _ScanOverlay(),
+        const _ScanOverlay(),
         Positioned(
           bottom: 40,
           left: 0,
@@ -160,13 +168,15 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     _controller?.stop();
 
     final content = barcode.rawValue!;
-    await ref.read(historyProvider.notifier).add(content);
+    // add() returns the created ScanResult — reuse its type instead of
+    // calling detectType a second time on the same content string.
+    final result = await ref.read(historyProvider.notifier).add(content);
 
     if (!mounted) return;
     await QrResultSheet.show(
       context,
       content: content,
-      type: _detectType(content),
+      type: result.type,
     );
 
     if (mounted) {
@@ -174,22 +184,11 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
       _controller?.start();
     }
   }
-
-  String _detectType(String content) {
-    if (content.startsWith('http://') || content.startsWith('https://')) {
-      return 'url';
-    } else if (content.startsWith('mailto:') ||
-        RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(content)) {
-      return 'email';
-    } else if (content.startsWith('tel:') ||
-        RegExp(r'^\+?[\d\s\-()]{7,}$').hasMatch(content)) {
-      return 'phone';
-    }
-    return 'text';
-  }
 }
 
 class _ScanOverlay extends StatelessWidget {
+  const _ScanOverlay();
+
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
