@@ -1,0 +1,25 @@
+{
+  "name": "Flutter",
+  "image": "ghcr.io/cirruslabs/flutter:stable",
+  "features": {
+    "ghcr.io/devcontainers/features/java:1": {
+      "version": "17"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "Dart-Code.flutter",
+        "Dart-Code.dart-code",
+        "ms-vscode.vscode-json"
+      ],
+      "settings": {
+        "dart.flutterSdkPath": "/flutter",
+        "editor.formatOnSave": true,
+        "editor.rulers": [80]
+      }
+    }
+  },
+  "postCreateCommand": "flutter pub get",
+  "remoteUser": "root"
+}
