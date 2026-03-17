@@ -43,26 +43,35 @@ jobs:
           channel: stable
           cache: true
 
-      # 4. Create android/local.properties for CI
-      #    (local copy has Windows D:\ paths — not valid on Linux)
-      - name: Create android/local.properties
+      # 4. Override Windows-hardcoded paths in the local gradlew + gradle.properties.
+      #    gradlew sets GRADLE_USER_HOME=D:/QRSnapify/gradle-home when unset —
+      #    that becomes an invalid relative path on Linux. Setting GRADLE_USER_HOME
+      #    and ANDROID_SDK_ROOT here prevents the `if [ -z "$VAR" ]` fallbacks.
+      #    Also strip org.gradle.java.home which points to a local Windows JDK path.
+      - name: Fix Windows-specific paths for CI
         run: |
+          # Redirect Gradle cache to a valid Linux directory
+          echo "GRADLE_USER_HOME=$HOME/.gradle" >> $GITHUB_ENV
+          # Ensure Android SDK root matches what setup-java / Actions provides
+          echo "ANDROID_SDK_ROOT=$ANDROID_HOME"  >> $GITHUB_ENV
+
+          # Strip the hardcoded Windows JDK path — setup-java already set JAVA_HOME
+          sed -i '/org\.gradle\.java\.home/d' android/gradle.properties
+
+          # Create local.properties pointing to CI SDK + Flutter
           echo "sdk.dir=$ANDROID_HOME"     > android/local.properties
           echo "flutter.sdk=$FLUTTER_ROOT" >> android/local.properties
 
-      # 5. Strip Windows-only org.gradle.java.home from gradle.properties
-      #    (setup-java already sets JAVA_HOME correctly for CI)
-      - name: Patch android/gradle.properties for CI
-        run: |
-          sed -i '/org\.gradle\.java\.home/d' android/gradle.properties
-          echo "Patched gradle.properties:"
+          echo "=== gradle.properties ==="
           cat android/gradle.properties
+          echo "=== local.properties ==="
+          cat android/local.properties
 
-      # 6. Install pub dependencies
+      # 5. Install pub dependencies
       - name: flutter pub get
         run: flutter pub get
 
-      # 7. Build APK
+      # 6. Build APK
       - name: Build APK (${{ github.event.inputs.build_type || 'debug' }})
         run: |
           BUILD_TYPE="${{ github.event.inputs.build_type || 'debug' }}"
@@ -72,7 +81,7 @@ jobs:
             flutter build apk --debug
           fi
 
-      # 8. Locate APK (Flutter puts it in build/app/outputs/flutter-apk/)
+      # 7. Locate APK (Flutter puts it in build/app/outputs/flutter-apk/)
       - name: Locate built APK
         run: |
           BUILD_TYPE="${{ github.event.inputs.build_type || 'debug' }}"
@@ -81,7 +90,7 @@ jobs:
           echo "Found APK: $APK_PATH"
           ls -lh "$APK_PATH"
 
-      # 9. Upload APK as downloadable artifact (kept 30 days)
+      # 8. Upload APK as downloadable artifact (kept 30 days)
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
@@ -90,7 +99,7 @@ jobs:
           retention-days: 30
           if-no-files-found: error
 
-      # 10. Print download instructions in the job summary
+      # 9. Print download instructions in the job summary
       - name: Job summary
         run: |
           BUILD_TYPE="${{ github.event.inputs.build_type || 'debug' }}"
