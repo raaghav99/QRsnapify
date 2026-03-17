@@ -1,0 +1,53 @@
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../models/scan_result.dart';
+
+class HistoryService {
+  static const _key = 'scan_history';
+  static const _maxItems = 500;
+
+  Future<List<ScanResult>> getHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getStringList(_key) ?? [];
+    return raw
+        .map((e) => ScanResult.fromJson(jsonDecode(e) as Map<String, dynamic>))
+        .toList()
+        .reversed
+        .toList();
+  }
+
+  Future<void> addScan(ScanResult result) async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getStringList(_key) ?? [];
+    raw.add(jsonEncode(result.toJson()));
+    if (raw.length > _maxItems) raw.removeAt(0);
+    await prefs.setStringList(_key, raw);
+  }
+
+  Future<void> deleteById(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getStringList(_key) ?? [];
+    raw.removeWhere((e) {
+      final map = jsonDecode(e) as Map<String, dynamic>;
+      return map['id'] == id;
+    });
+    await prefs.setStringList(_key, raw);
+  }
+
+  /// Deletes multiple items in a single read-filter-write cycle.
+  Future<void> deleteByIds(Set<String> ids) async {
+    if (ids.isEmpty) return;
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getStringList(_key) ?? [];
+    raw.removeWhere((e) {
+      final map = jsonDecode(e) as Map<String, dynamic>;
+      return ids.contains(map['id']);
+    });
+    await prefs.setStringList(_key, raw);
+  }
+
+  Future<void> clearAll() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_key);
+  }
+}

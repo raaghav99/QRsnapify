@@ -1,0 +1,45 @@
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+.pub-cache/
+.pub/
+
+# Android
+android/.gradle/
+android/local.properties
+android/captures/
+**/android/**/GeneratedPluginRegistrant.java
+local.properties
+key.properties
+*.keystore
+*.jks
+
+# IntelliJ/Android Studio
+*.iml
+.idea/
+.DS_Store
+
+# VSCode
+.vscode/
+
+# Misc
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+
+# iOS (not applicable here but standard)
+ios/Flutter/.last_build_id
+ios/Pods/
+
+# Flutter generated files
+lib/generated_plugin_registrant.dart
+flutter/

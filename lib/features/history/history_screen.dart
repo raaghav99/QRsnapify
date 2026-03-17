@@ -1,0 +1,365 @@
+import 'dart:math' as math;
+import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gap/gap.dart';
+import 'package:iconsax/iconsax.dart';
+import 'package:lottie/lottie.dart';
+import '../../app/providers.dart';
+import '../../app/theme.dart';
+import '../../models/scan_result.dart';
+import '../../shared/widgets/qr_result_sheet.dart';
+import 'history_controller.dart';
+
+class HistoryScreen extends ConsumerStatefulWidget {
+  const HistoryScreen({super.key});
+
+  @override
+  ConsumerState<HistoryScreen> createState() => _HistoryScreenState();
+}
+
+class _HistoryScreenState extends ConsumerState<HistoryScreen> {
+  final Set<String> _selectedIds = {};
+  bool _selectMode = false;
+
+  void _enterSelectMode(String id) {
+    setState(() {
+      _selectMode = true;
+      _selectedIds.add(id);
+    });
+  }
+
+  void _toggleItem(String id) {
+    setState(() {
+      if (_selectedIds.contains(id)) {
+        _selectedIds.remove(id);
+        if (_selectedIds.isEmpty) _selectMode = false;
+      } else {
+        _selectedIds.add(id);
+      }
+    });
+  }
+
+  void _exitSelectMode() {
+    setState(() {
+      _selectMode = false;
+      _selectedIds.clear();
+    });
+  }
+
+  void _selectAll(List<ScanResult> items) {
+    setState(() {
+      _selectedIds.addAll(items.map((e) => e.id));
+    });
+  }
+
+  Future<void> _deleteSelected(HistoryController controller) async {
+    final ids = Set<String>.from(_selectedIds);
+    _exitSelectMode();
+    await controller.deleteMany(ids);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final historyAsync = ref.watch(historyProvider);
+    final controller = ref.read(historyControllerProvider);
+
+    return PopScope(
+      canPop: !_selectMode,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && _selectMode) _exitSelectMode();
+      },
+      child: Scaffold(
+        appBar: _selectMode
+            ? AppBar(
+                leading: IconButton(
+                  icon: const Icon(Icons.close_rounded),
+                  onPressed: _exitSelectMode,
+                ),
+                title: Text(
+                  '${_selectedIds.length} selected',
+                  style: AppTextStyles.subheading(context),
+                ),
+                actions: [
+                  // Select all
+                  historyAsync.whenOrNull(
+                    data: (items) => TextButton(
+                      onPressed: _selectedIds.length == items.length
+                          ? _exitSelectMode
+                          : () => _selectAll(items),
+                      child: Text(
+                        _selectedIds.length == items.length
+                            ? 'Deselect all'
+                            : 'Select all',
+                        style: const TextStyle(color: AppColors.primary),
+                      ),
+                    ),
+                  ) ?? const SizedBox.shrink(),
+                  // Delete selected
+                  IconButton(
+                    icon: const Icon(Icons.delete_rounded,
+                        color: AppColors.error),
+                    tooltip: 'Delete selected',
+                    onPressed: _selectedIds.isEmpty
+                        ? null
+                        : () => _deleteSelected(controller),
+                  ),
+                ],
+              )
+            : AppBar(
+                title: Text('History',
+                    style: AppTextStyles.subheading(context)),
+                centerTitle: true,
+                actions: [
+                  if (historyAsync.valueOrNull?.isNotEmpty == true)
+                    IconButton(
+                      icon: const Icon(Icons.delete_sweep_rounded),
+                      tooltip: 'Clear all',
+                      onPressed: () =>
+                          _confirmClearAll(context, controller),
+                    ),
+                ],
+              ),
+        body: historyAsync.when(
+          loading: () =>
+              const Center(child: CircularProgressIndicator()),
+          error: (e, _) => Center(child: Text('Error: $e')),
+          data: (items) {
+            if (items.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Lottie.asset(
+                      'assets/lottie/empty_history.json',
+                      width: 200,
+                      height: 200,
+                      errorBuilder: (_, __, ___) => const Icon(
+                        Icons.history_rounded,
+                        size: 80,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const Gap(AppSpacing.lg),
+                    Text('No scans yet',
+                        style: AppTextStyles.subheading(context)
+                            .copyWith(
+                                color: AppColors.textSubColor(context))),
+                    const Gap(AppSpacing.sm),
+                    Text('Start scanning to see your history here',
+                        style: AppTextStyles.caption(context)),
+                  ],
+                ),
+              );
+            }
+            return ListView.builder(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              itemCount: items.length,
+              itemBuilder: (context, index) {
+                final item = items[index];
+                final isSelected = _selectedIds.contains(item.id);
+                return _HistoryItem(
+                  item: item,
+                  index: index,
+                  selectMode: _selectMode,
+                  isSelected: isSelected,
+                  onDelete: () => controller.delete(item.id),
+                  onTap: () {
+                    if (_selectMode) {
+                      _toggleItem(item.id);
+                    } else {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (_) => QrResultSheet(result: item),
+                      );
+                    }
+                  },
+                  onLongPress: () {
+                    if (!_selectMode) _enterSelectMode(item.id);
+                  },
+                );
+              },
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+// ─── History item ─────────────────────────────────────────────────────────────
+
+class _HistoryItem extends StatelessWidget {
+  final ScanResult item;
+  final int index;
+  final bool selectMode;
+  final bool isSelected;
+  final VoidCallback onDelete;
+  final VoidCallback onTap;
+  final VoidCallback onLongPress;
+
+  const _HistoryItem({
+    required this.item,
+    required this.index,
+    required this.selectMode,
+    required this.isSelected,
+    required this.onDelete,
+    required this.onTap,
+    required this.onLongPress,
+  });
+
+  IconData _typeIcon(QRType type) => switch (type) {
+        QRType.url => Iconsax.link,
+        QRType.email => Iconsax.message,
+        QRType.phone => Iconsax.call,
+        QRType.wifi => Iconsax.wifi,
+        QRType.text => Iconsax.document_text,
+      };
+
+  String _formatDate(DateTime dt) {
+    final local = dt.toLocal();
+    final now = DateTime.now();
+    final diff = now.difference(local);
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inHours < 1) return '${diff.inMinutes}m ago';
+    if (diff.inDays < 1) return '${diff.inHours}h ago';
+    if (diff.inDays < 7) return '${diff.inDays}d ago';
+    return '${local.day}/${local.month}/${local.year}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final card = GestureDetector(
+      onTap: onTap,
+      onLongPress: onLongPress,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        margin: const EdgeInsets.only(bottom: AppSpacing.md),
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.primary.withValues(alpha: 0.1)
+              : AppColors.cardColor(context),
+          borderRadius: AppRadius.cardRadius,
+          border: isSelected
+              ? Border.all(
+                  color: AppColors.primary.withValues(alpha: 0.4), width: 1.5)
+              : null,
+          boxShadow: const [AppShadows.card],
+        ),
+        child: Row(
+          children: [
+            // Checkbox in select mode, type icon otherwise
+            if (selectMode)
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 150),
+                child: Checkbox(
+                  key: ValueKey(isSelected),
+                  value: isSelected,
+                  onChanged: (_) => onTap(),
+                  activeColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4)),
+                  visualDensity: VisualDensity.compact,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              )
+            else
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: AppRadius.chipRadius,
+                ),
+                child:
+                    Icon(_typeIcon(item.type), color: AppColors.primary, size: 18),
+              ),
+            const Gap(AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.content,
+                    style: AppTextStyles.body(context),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const Gap(2),
+                  Text(_formatDate(item.scannedAt),
+                      style: AppTextStyles.caption(context)),
+                ],
+              ),
+            ),
+            // Delete button only in normal mode
+            if (!selectMode)
+              IconButton(
+                onPressed: onDelete,
+                icon: const Icon(Icons.delete_outline_rounded,
+                    color: AppColors.error, size: 20),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                tooltip: 'Delete',
+              ),
+          ],
+        ),
+      ),
+    );
+
+    // Swipe-to-delete only works in normal mode
+    if (selectMode) {
+      return card
+          .animate(delay: Duration(milliseconds: math.min(50 * index, 300)))
+          .fadeIn(duration: 250.ms)
+          .slideX(begin: 0.1, duration: 250.ms);
+    }
+
+    return Dismissible(
+      key: Key(item.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: AppSpacing.xl),
+        decoration: BoxDecoration(
+          color: AppColors.error,
+          borderRadius: AppRadius.cardRadius,
+        ),
+        child: const Icon(Iconsax.trash, color: Colors.white),
+      ),
+      onDismissed: (_) => onDelete(),
+      child: card,
+    )
+        .animate(delay: Duration(milliseconds: math.min(50 * index, 300)))
+        .fadeIn(duration: 250.ms)
+        .slideX(begin: 0.1, duration: 250.ms);
+  }
+}
+
+// ─── Clear all dialog ─────────────────────────────────────────────────────────
+
+void _confirmClearAll(BuildContext context, HistoryController controller) {
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Clear History'),
+      content:
+          const Text('Delete all scan history? This cannot be undone.'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () {
+            Navigator.pop(ctx);
+            controller.deleteAll();
+          },
+          child: const Text('Delete All',
+              style: TextStyle(color: AppColors.error)),
+        ),
+      ],
+    ),
+  );
+}
