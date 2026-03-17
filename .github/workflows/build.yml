@@ -1,0 +1,111 @@
+name: Build QRSnap APK
+
+# ── Triggers ──────────────────────────────────────────────────────────────────
+on:
+  # Manual trigger from GitHub mobile app or web — choose build type
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type'
+        required: true
+        default: 'debug'
+        type: choice
+        options:
+          - debug
+          - release
+
+  # Auto-build on every push to main/master
+  push:
+    branches: [main, master]
+
+# ── Job ───────────────────────────────────────────────────────────────────────
+jobs:
+  build:
+    name: Flutter APK (${{ github.event.inputs.build_type || 'debug' }})
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Java 17 — same version used locally
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # 3. Flutter (stable channel, with dependency cache)
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      # 4. Create android/local.properties for CI
+      #    (local copy has Windows D:\ paths — not valid on Linux)
+      - name: Create android/local.properties
+        run: |
+          echo "sdk.dir=$ANDROID_HOME"     > android/local.properties
+          echo "flutter.sdk=$FLUTTER_ROOT" >> android/local.properties
+
+      # 5. Strip Windows-only org.gradle.java.home from gradle.properties
+      #    (setup-java already sets JAVA_HOME correctly for CI)
+      - name: Patch android/gradle.properties for CI
+        run: |
+          sed -i '/org\.gradle\.java\.home/d' android/gradle.properties
+          echo "Patched gradle.properties:"
+          cat android/gradle.properties
+
+      # 6. Install pub dependencies
+      - name: flutter pub get
+        run: flutter pub get
+
+      # 7. Build APK
+      - name: Build APK (${{ github.event.inputs.build_type || 'debug' }})
+        run: |
+          BUILD_TYPE="${{ github.event.inputs.build_type || 'debug' }}"
+          if [ "$BUILD_TYPE" = "release" ]; then
+            flutter build apk --release --no-tree-shake-icons
+          else
+            flutter build apk --debug
+          fi
+
+      # 8. Locate APK (Flutter puts it in build/app/outputs/flutter-apk/)
+      - name: Locate built APK
+        run: |
+          BUILD_TYPE="${{ github.event.inputs.build_type || 'debug' }}"
+          APK_PATH="build/app/outputs/flutter-apk/app-${BUILD_TYPE}.apk"
+          echo "APK_PATH=$APK_PATH" >> $GITHUB_ENV
+          echo "Found APK: $APK_PATH"
+          ls -lh "$APK_PATH"
+
+      # 9. Upload APK as downloadable artifact (kept 30 days)
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: QRSnap-${{ github.event.inputs.build_type || 'debug' }}-${{ github.run_number }}
+          path: ${{ env.APK_PATH }}
+          retention-days: 30
+          if-no-files-found: error
+
+      # 10. Print download instructions in the job summary
+      - name: Job summary
+        run: |
+          BUILD_TYPE="${{ github.event.inputs.build_type || 'debug' }}"
+          cat >> $GITHUB_STEP_SUMMARY << EOF
+          ## ✅ QRSnap APK built successfully
+
+          | Field       | Value |
+          |-------------|-------|
+          | Build type  | \`$BUILD_TYPE\` |
+          | Run #       | ${{ github.run_number }} |
+          | Triggered by | ${{ github.actor }} |
+
+          ### How to download on mobile
+          1. Open GitHub → **Actions** tab
+          2. Tap this workflow run
+          3. Scroll to **Artifacts** → tap **QRSnap-${BUILD_TYPE}-${{ github.run_number }}**
+          4. Download the ZIP → extract the APK → install
+          EOF
