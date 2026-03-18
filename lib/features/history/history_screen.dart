@@ -21,6 +21,7 @@ class HistoryScreen extends ConsumerStatefulWidget {
 class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   final Set<String> _selectedIds = {};
   bool _selectMode = false;
+  bool _showFavouritesOnly = false;
 
   void _enterSelectMode(String id) {
     setState(() {
@@ -81,21 +82,24 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                   style: AppTextStyles.subheading(context),
                 ),
                 actions: [
-                  // Select all
                   historyAsync.whenOrNull(
-                    data: (items) => TextButton(
-                      onPressed: _selectedIds.length == items.length
-                          ? _exitSelectMode
-                          : () => _selectAll(items),
-                      child: Text(
-                        _selectedIds.length == items.length
-                            ? 'Deselect all'
-                            : 'Select all',
-                        style: const TextStyle(color: AppColors.primary),
-                      ),
-                    ),
+                    data: (items) {
+                      final visible = _showFavouritesOnly
+                          ? items.where((e) => e.isFavourite).toList()
+                          : items;
+                      return TextButton(
+                        onPressed: _selectedIds.length == visible.length
+                            ? _exitSelectMode
+                            : () => _selectAll(visible),
+                        child: Text(
+                          _selectedIds.length == visible.length
+                              ? 'Deselect all'
+                              : 'Select all',
+                          style: const TextStyle(color: AppColors.primary),
+                        ),
+                      );
+                    },
                   ) ?? const SizedBox.shrink(),
-                  // Delete selected
                   IconButton(
                     icon: const Icon(Icons.delete_rounded,
                         color: AppColors.error),
@@ -152,37 +156,141 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                 ),
               );
             }
-            return ListView.builder(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              itemCount: items.length,
-              itemBuilder: (context, index) {
-                final item = items[index];
-                final isSelected = _selectedIds.contains(item.id);
-                return _HistoryItem(
-                  item: item,
-                  index: index,
-                  selectMode: _selectMode,
-                  isSelected: isSelected,
-                  onDelete: () => controller.delete(item.id),
-                  onTap: () {
-                    if (_selectMode) {
-                      _toggleItem(item.id);
-                    } else {
-                      showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.transparent,
-                        builder: (_) => QrResultSheet(result: item),
-                      );
-                    }
-                  },
-                  onLongPress: () {
-                    if (!_selectMode) _enterSelectMode(item.id);
-                  },
-                );
-              },
+
+            final hasFavourites = items.any((e) => e.isFavourite);
+            final filtered = _showFavouritesOnly
+                ? items.where((e) => e.isFavourite).toList()
+                : items;
+
+            return Column(
+              children: [
+                // Filter toggle — only show if there are favourites
+                if (hasFavourites && !_selectMode)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, 0),
+                    child: Row(
+                      children: [
+                        _FilterChip(
+                          label: 'All',
+                          isSelected: !_showFavouritesOnly,
+                          onTap: () => setState(() => _showFavouritesOnly = false),
+                        ),
+                        const Gap(AppSpacing.sm),
+                        _FilterChip(
+                          label: 'Favourites',
+                          isSelected: _showFavouritesOnly,
+                          onTap: () => setState(() => _showFavouritesOnly = true),
+                        ),
+                      ],
+                    ),
+                  ),
+                // Empty favourites state
+                if (_showFavouritesOnly && filtered.isEmpty)
+                  Expanded(
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Iconsax.star,
+                              size: 56,
+                              color: AppColors.textSubColor(context)),
+                          const Gap(AppSpacing.lg),
+                          Text('No favourites yet',
+                              style: AppTextStyles.subheading(context)
+                                  .copyWith(
+                                      color: AppColors.textSubColor(context))),
+                          const Gap(AppSpacing.sm),
+                          Text('Tap the star on any scan to save it here',
+                              style: AppTextStyles.caption(context)),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      itemCount: filtered.length,
+                      itemBuilder: (context, index) {
+                        final item = filtered[index];
+                        final isSelected = _selectedIds.contains(item.id);
+                        return _HistoryItem(
+                          item: item,
+                          index: index,
+                          selectMode: _selectMode,
+                          isSelected: isSelected,
+                          onDelete: () => controller.delete(item.id),
+                          onToggleFavourite: () =>
+                              controller.toggleFavourite(item.id),
+                          onTap: () {
+                            if (_selectMode) {
+                              _toggleItem(item.id);
+                            } else {
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.transparent,
+                                builder: (_) =>
+                                    QrResultSheet(result: item),
+                              );
+                            }
+                          },
+                          onLongPress: () {
+                            if (!_selectMode) _enterSelectMode(item.id);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+              ],
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Filter chip ──────────────────────────────────────────────────────────────
+
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _FilterChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.primary
+              : AppColors.cardColor(context),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.primary
+                : AppColors.textSubColor(context).withValues(alpha: 0.2),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: isSelected ? Colors.white : AppColors.textSubColor(context),
+          ),
         ),
       ),
     );
@@ -197,6 +305,7 @@ class _HistoryItem extends StatelessWidget {
   final bool selectMode;
   final bool isSelected;
   final VoidCallback onDelete;
+  final VoidCallback onToggleFavourite;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
 
@@ -206,6 +315,7 @@ class _HistoryItem extends StatelessWidget {
     required this.selectMode,
     required this.isSelected,
     required this.onDelete,
+    required this.onToggleFavourite,
     required this.onTap,
     required this.onLongPress,
   });
@@ -293,16 +403,25 @@ class _HistoryItem extends StatelessWidget {
                 ],
               ),
             ),
-            // Delete button only in normal mode
-            if (!selectMode)
-              IconButton(
-                onPressed: onDelete,
-                icon: const Icon(Icons.delete_outline_rounded,
-                    color: AppColors.error, size: 20),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                tooltip: 'Delete',
+            // Star + delete in normal mode
+            if (!selectMode) ...[
+              GestureDetector(
+                onTap: onToggleFavourite,
+                child: Icon(
+                  item.isFavourite ? Icons.star_rounded : Icons.star_outline_rounded,
+                  color: item.isFavourite
+                      ? const Color(0xFFFBBF24)
+                      : AppColors.textSubColor(context),
+                  size: 22,
+                ),
               ),
+              const Gap(AppSpacing.sm),
+              GestureDetector(
+                onTap: onDelete,
+                child: const Icon(Icons.delete_outline_rounded,
+                    color: AppColors.error, size: 20),
+              ),
+            ],
           ],
         ),
       ),

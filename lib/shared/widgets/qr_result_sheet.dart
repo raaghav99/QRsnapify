@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -12,7 +14,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/scan_result.dart';
 import '../../app/theme.dart';
-import '../../features/webview/webview_screen.dart';
+import 'pdf_fetch_loader.dart';
 
 class QrResultSheet extends ConsumerWidget {
   final ScanResult result;
@@ -306,23 +308,14 @@ class QrResultSheet extends ConsumerWidget {
   Future<void> _checkAndSavePdf(BuildContext context, String urlStr) async {
     if (!context.mounted) return;
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => const AlertDialog(
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Downloading page...', textAlign: TextAlign.center),
-          ],
-        ),
-      ),
-    );
+    PdfFetchLoader.show(context);
+    debugPrint('[PDF] === Starting PDF save for: $urlStr ===');
 
     try {
-      // Download raw HTML using dart:io - no WebView needed
+      // Stage 1: Connect
+      PdfFetchLoader.updateProgress(0.05, stage: 'Connecting');
+      debugPrint('[PDF] Stage 1: Connecting...');
+
       final uri = Uri.parse(urlStr);
       final client = HttpClient()
         ..connectionTimeout = const Duration(seconds: 10)
@@ -335,18 +328,42 @@ class QrResultSheet extends ConsumerWidget {
       );
       request.headers.set('Accept', 'text/html,application/xhtml+xml');
       request.headers.set('Accept-Language', 'en-US,en;q=0.9');
+      debugPrint('[PDF] Request sent, waiting for response...');
 
+      // Stage 2: Download with live progress
+      PdfFetchLoader.updateProgress(0.1, stage: 'Waiting for server');
       final response = await request.close();
+      debugPrint('[PDF] Response: ${response.statusCode}');
+
+      final contentLength = response.headers.contentLength;
+      debugPrint('[PDF] Content-Length: $contentLength');
+
       final bytes = <int>[];
       await for (final chunk in response) {
         bytes.addAll(chunk);
+        // Live download progress: 10% to 50%
+        if (contentLength > 0) {
+          final dlProgress = 0.1 + (bytes.length / contentLength) * 0.4;
+          final kb = (bytes.length / 1024).toStringAsFixed(0);
+          final totalKb = (contentLength / 1024).toStringAsFixed(0);
+          PdfFetchLoader.updateProgress(
+              dlProgress.clamp(0.1, 0.5), stage: 'Downloading ${kb}KB / ${totalKb}KB');
+        } else {
+          final kb = (bytes.length / 1024).toStringAsFixed(0);
+          PdfFetchLoader.updateProgress(0.3, stage: 'Downloading ${kb}KB');
+        }
       }
       client.close();
+      debugPrint('[PDF] Downloaded ${bytes.length} bytes (${(bytes.length / 1024).toStringAsFixed(1)}KB)');
 
-      // Detect encoding from Content-Type or fallback to UTF-8
+      // Stage 3: Decode HTML
+      PdfFetchLoader.updateProgress(0.55, stage: 'Processing');
+      debugPrint('[PDF] Stage 3: Decoding HTML...');
+
       String html;
       final contentType = response.headers.contentType;
       final charset = contentType?.charset ?? 'utf-8';
+      debugPrint('[PDF] charset: $charset');
       try {
         html = charset.toLowerCase() == 'utf-8' || charset.toLowerCase() == 'utf8'
             ? utf8.decode(bytes, allowMalformed: true)
@@ -354,68 +371,136 @@ class QrResultSheet extends ConsumerWidget {
       } catch (_) {
         html = utf8.decode(bytes, allowMalformed: true);
       }
+      debugPrint('[PDF] HTML: ${html.length} chars');
 
-      // Warn if page looks JS-rendered (likely blank)
+      // JS-check
       final isJsOnly = html.contains('<noscript') ||
           (html.contains('<body') &&
               html.indexOf('<body') > html.lastIndexOf('</body>') - 200);
-
-      if (!context.mounted) return;
-      Navigator.pop(context); // Close loading dialog
-
+      debugPrint('[PDF] JS-only: $isJsOnly');
       if (isJsOnly && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-                'This page requires JavaScript — PDF may appear incomplete'),
+            content: Text('This page may require JavaScript — PDF might be incomplete'),
             duration: Duration(seconds: 3),
           ),
         );
       }
 
-      // Convert HTML to PDF bytes and share (no print dialog)
-      if (!context.mounted) return;
-      final pdfBytes = await Printing.convertHtml(
-        format: PdfPageFormat.a4,
-        html: html,
-        baseUrl: uri.toString(),
-      );
+      // Stage 4: Convert to PDF with timeout
+      if (!context.mounted) {
+        debugPrint('[PDF] Context unmounted, aborting');
+        PdfFetchLoader.dismiss(context);
+        return;
+      }
+      PdfFetchLoader.updateProgress(0.6, stage: 'Rendering PDF');
+      debugPrint('[PDF] Stage 4: Printing.convertHtml starting...');
 
+      Uint8List? pdfBytes;
+      try {
+        pdfBytes = await Printing.convertHtml(
+          format: PdfPageFormat.a4,
+          html: html,
+          baseUrl: uri.toString(),
+        ).timeout(const Duration(seconds: 20));
+        debugPrint('[PDF] convertHtml done: ${pdfBytes.length} bytes');
+      } catch (e) {
+        debugPrint('[PDF] convertHtml failed/timed out: $e');
+        debugPrint('[PDF] Falling back to text-based PDF...');
+        // Fallback: create a simple text PDF with the page content
+        pdfBytes = await _buildFallbackPdf(urlStr, html);
+        debugPrint('[PDF] Fallback PDF: ${pdfBytes.length} bytes');
+      }
+
+      // Stage 5: Save
+      PdfFetchLoader.updateProgress(0.9, stage: 'Saving');
+      debugPrint('[PDF] Stage 5: Writing file...');
+
+      final dir = await getTemporaryDirectory();
+      final fileName = 'QRSnap_${DateTime.now().millisecondsSinceEpoch}.pdf';
+      final file = File('${dir.path}/$fileName');
+      await file.writeAsBytes(pdfBytes);
+      debugPrint('[PDF] Saved: ${file.path}');
+
+      // Done — show result, then share
       if (context.mounted) {
+        await PdfFetchLoader.showResult(context,
+            result: PdfFetchResult.success, filePath: fileName);
+        debugPrint('[PDF] Opening share sheet...');
         await Share.shareXFiles(
-          [
-            XFile.fromData(
-              pdfBytes,
-              name: 'QRSnap_webpage.pdf',
-              mimeType: 'application/pdf',
-            ),
-          ],
+          [XFile(file.path)],
           subject: 'QRSnap saved page',
         );
+        debugPrint('[PDF] === Complete ===');
       }
-    } on SocketException catch (_) {
+    } on SocketException catch (e) {
+      debugPrint('[PDF] SocketException: $e');
       if (context.mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No internet connection')),
-        );
+        await PdfFetchLoader.showResult(context,
+            result: PdfFetchResult.networkError);
       }
-    } catch (e) {
+    } catch (e, stack) {
+      debugPrint('[PDF] FATAL: $e');
+      debugPrint('[PDF] Stack: $stack');
       if (context.mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not save PDF: ${e.toString()}')),
-        );
+        await PdfFetchLoader.showResult(context,
+            result: PdfFetchResult.timeout);
       }
     }
   }
 
-  // ── Open URL in in-app browser ───────────────────────────────────────────
+  // ── Fallback: text-based PDF when convertHtml fails ─────────────────────────
+  Future<Uint8List> _buildFallbackPdf(String url, String html) async {
+    // Strip HTML tags to extract readable text
+    final text = html
+        .replaceAll(RegExp(r'<style[^>]*>[\s\S]*?</style>'), '')
+        .replaceAll(RegExp(r'<script[^>]*>[\s\S]*?</script>'), '')
+        .replaceAll(RegExp(r'<[^>]+>'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+
+    final doc = pw.Document();
+    // Split into chunks that fit on pages (~3000 chars per page)
+    final chunks = <String>[];
+    for (var i = 0; i < text.length; i += 3000) {
+      chunks.add(text.substring(i, i + 3000 > text.length ? text.length : i + 3000));
+    }
+    if (chunks.isEmpty) chunks.add('(Empty page)');
+
+    for (var i = 0; i < chunks.length && i < 20; i++) {
+      doc.addPage(pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(40),
+        build: (_) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            if (i == 0) ...[
+              pw.Text(url,
+                  style: pw.TextStyle(
+                      fontSize: 10, color: PdfColors.blue800,
+                      fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 4),
+              pw.Divider(color: PdfColors.grey400),
+              pw.SizedBox(height: 12),
+            ],
+            pw.Text(chunks[i], style: const pw.TextStyle(fontSize: 10)),
+            pw.Spacer(),
+            pw.Text('Page ${i + 1} — QRSnap',
+                style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey500)),
+          ],
+        ),
+      ));
+    }
+    return doc.save();
+  }
+
+  // ── Open URL in external browser (system chooser) ───────────────────────
   Future<void> _openUrl(BuildContext context, String urlStr) async {
     if (!context.mounted) return;
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => WebViewScreen(url: urlStr)),
-    );
+    final uri = Uri.tryParse(urlStr);
+    if (uri != null) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   // ── Save as PDF ──────────────────────────────────────────────────────────
@@ -692,13 +777,12 @@ class QrResultSheet extends ConsumerWidget {
                 ),
               ),
               const Gap(AppSpacing.sm),
-              // PDF — always
-              // URL → opens browser (browser toolbar has full-page PDF)
-              // Other → generates a content PDF immediately
+              // URL → Save PDF (download + convert, no browser)
+              // Other → Print (system print dialog with styled content)
               Expanded(
                 child: _ActionButton(
-                  icon: Icons.picture_as_pdf_rounded,
-                  label: 'PDF',
+                  icon: isUrl ? Icons.picture_as_pdf_rounded : Icons.print_rounded,
+                  label: isUrl ? 'Save PDF' : 'Print',
                   onTap: () => _savePdf(context),
                 ),
               ),

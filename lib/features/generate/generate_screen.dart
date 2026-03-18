@@ -23,18 +23,7 @@ class GenerateScreen extends ConsumerStatefulWidget {
 
 class _GenerateScreenState extends ConsumerState<GenerateScreen> {
   final _qrKey = GlobalKey();
-  final _inputController = TextEditingController();
-  final _ssidController = TextEditingController();
-  final _passwordController = TextEditingController();
   bool _isSaving = false;
-
-  @override
-  void dispose() {
-    _inputController.dispose();
-    _ssidController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
 
   Future<Uint8List?> _captureQr() async {
     try {
@@ -57,7 +46,6 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
       final bytes = await _captureQr();
       if (bytes == null) return;
 
-      // Write to temp file then save to gallery via MediaStore (visible in gallery app)
       final dir = await getTemporaryDirectory();
       final file = File(
           '${dir.path}/qrsnap_${DateTime.now().millisecondsSinceEpoch}.png');
@@ -118,18 +106,10 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
                     child: FilterChip(
                       label: Text(_typeLabel(type)),
                       selected: isSelected,
-                      onSelected: (_) {
-                        controller.selectType(type);
-                        _inputController.clear();
-                        _ssidController.clear();
-                        _passwordController.clear();
-                      },
+                      onSelected: (_) => controller.selectType(type),
                       selectedColor: AppColors.primary,
-                      // Explicit bg so dark-mode chip surface is correct
                       backgroundColor: AppColors.cardColor(context),
                       labelStyle: TextStyle(
-                        // colorScheme.onSurface is always contrast-correct for
-                        // the active theme (light text on dark, dark on light)
                         color: isSelected
                             ? Colors.white
                             : Theme.of(context).colorScheme.onSurface,
@@ -142,42 +122,12 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
               ),
             ),
             const Gap(AppSpacing.lg),
-            // Input fields
-            if (state.selectedType == GenerateType.wifi)
-              _WifiFields(
-                ssidController: _ssidController,
-                passwordController: _passwordController,
-                security: state.security,
-                onSsidChanged: controller.setSsid,
-                onPasswordChanged: controller.setPassword,
-                onSecurityChanged: controller.setSecurity,
-              )
-            else
-              TextField(
-                controller: _inputController,
-                onChanged: controller.setInput,
-                maxLength: 2953,
-                decoration: InputDecoration(
-                  hintText: _hintText(state.selectedType),
-                  filled: true,
-                  fillColor: AppColors.cardColor(context),
-                  border: OutlineInputBorder(
-                    borderRadius: AppRadius.cardRadius,
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: AppRadius.cardRadius,
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: AppRadius.cardRadius,
-                    borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-                  ),
-                  contentPadding: const EdgeInsets.all(AppSpacing.lg),
-                ),
-                keyboardType: _keyboardType(state.selectedType),
-                maxLines: state.selectedType == GenerateType.text ? 4 : 1,
-              ),
+            // Input fields — each type has its own form
+            // Key forces rebuild when type changes so controllers reset
+            KeyedSubtree(
+              key: ValueKey(state.selectedType),
+              child: _buildInputFields(context, state, controller),
+            ),
             const Gap(AppSpacing.xl),
             // QR Preview
             if (state.hasContent) ...[
@@ -256,12 +206,83 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
     );
   }
 
+  Widget _buildInputFields(
+      BuildContext context, GenerateState state, GenerateController controller) {
+    return switch (state.selectedType) {
+      GenerateType.wifi => _MultiFieldForm(fields: [
+          _FieldConfig(label: 'Network Name (SSID)', onChanged: controller.setSsid),
+          _FieldConfig(label: 'Password', onChanged: controller.setPassword, obscure: true),
+          _FieldConfig(
+            label: 'Security',
+            onChanged: controller.setSecurity,
+            isDropdown: true,
+            dropdownItems: ['WPA', 'WEP', 'nopass'],
+            dropdownValue: state.security,
+          ),
+        ]),
+      GenerateType.sms => _MultiFieldForm(fields: [
+          _FieldConfig(
+            label: 'Phone Number',
+            onChanged: controller.setSmsPhone,
+            keyboard: TextInputType.phone,
+          ),
+          _FieldConfig(label: 'Message', onChanged: controller.setSmsBody, maxLines: 3),
+        ]),
+      GenerateType.upi => _MultiFieldForm(fields: [
+          _FieldConfig(label: 'UPI ID (e.g. name@upi)', onChanged: controller.setUpiVpa),
+          _FieldConfig(label: 'Payee Name', onChanged: controller.setUpiName),
+          _FieldConfig(
+            label: 'Amount (optional)',
+            onChanged: controller.setUpiAmount,
+            keyboard: TextInputType.number,
+          ),
+        ]),
+      GenerateType.whatsapp => _MultiFieldForm(fields: [
+          _FieldConfig(
+            label: 'Phone Number (with country code)',
+            onChanged: controller.setWaPhone,
+            keyboard: TextInputType.phone,
+          ),
+          _FieldConfig(
+            label: 'Pre-filled Message (optional)',
+            onChanged: controller.setWaMessage,
+            maxLines: 3,
+          ),
+        ]),
+      GenerateType.vcard => _MultiFieldForm(fields: [
+          _FieldConfig(label: 'Full Name', onChanged: controller.setVcardName),
+          _FieldConfig(
+            label: 'Phone',
+            onChanged: controller.setVcardPhone,
+            keyboard: TextInputType.phone,
+          ),
+          _FieldConfig(
+            label: 'Email',
+            onChanged: controller.setVcardEmail,
+            keyboard: TextInputType.emailAddress,
+          ),
+          _FieldConfig(label: 'Organization (optional)', onChanged: controller.setVcardOrg),
+        ]),
+      // Simple single-field types
+      _ => _SimpleField(
+          hint: _hintText(state.selectedType),
+          onChanged: controller.setInput,
+          keyboard: _keyboardType(state.selectedType),
+          maxLines: state.selectedType == GenerateType.text ? 4 : 1,
+        ),
+    };
+  }
+
   String _typeLabel(GenerateType type) => switch (type) {
     GenerateType.url => 'URL',
     GenerateType.text => 'Text',
     GenerateType.email => 'Email',
     GenerateType.phone => 'Phone',
+    GenerateType.sms => 'SMS',
     GenerateType.wifi => 'WiFi',
+    GenerateType.upi => 'UPI',
+    GenerateType.whatsapp => 'WhatsApp',
+    GenerateType.vcard => 'Contact',
   };
 
   String _hintText(GenerateType type) => switch (type) {
@@ -269,7 +290,7 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
     GenerateType.text => 'Enter your text here...',
     GenerateType.email => 'email@example.com',
     GenerateType.phone => '+1 234 567 8900',
-    GenerateType.wifi => '',
+    _ => '',
   };
 
   TextInputType _keyboardType(GenerateType type) => switch (type) {
@@ -280,87 +301,172 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
   };
 }
 
-class _WifiFields extends StatefulWidget {
-  final TextEditingController ssidController;
-  final TextEditingController passwordController;
-  final String security;
-  final ValueChanged<String> onSsidChanged;
-  final ValueChanged<String> onPasswordChanged;
-  final ValueChanged<String> onSecurityChanged;
+// ── Field config for multi-field forms ────────────────────────────────────────
 
-  const _WifiFields({
-    required this.ssidController,
-    required this.passwordController,
-    required this.security,
-    required this.onSsidChanged,
-    required this.onPasswordChanged,
-    required this.onSecurityChanged,
+class _FieldConfig {
+  final String label;
+  final ValueChanged<String> onChanged;
+  final TextInputType keyboard;
+  final int maxLines;
+  final bool obscure;
+  final bool isDropdown;
+  final List<String>? dropdownItems;
+  final String? dropdownValue;
+
+  const _FieldConfig({
+    required this.label,
+    required this.onChanged,
+    this.keyboard = TextInputType.text,
+    this.maxLines = 1,
+    this.obscure = false,
+    this.isDropdown = false,
+    this.dropdownItems,
+    this.dropdownValue,
+  });
+}
+
+// ── Simple single text field ──────────────────────────────────────────────────
+
+class _SimpleField extends StatefulWidget {
+  final String hint;
+  final ValueChanged<String> onChanged;
+  final TextInputType keyboard;
+  final int maxLines;
+
+  const _SimpleField({
+    required this.hint,
+    required this.onChanged,
+    required this.keyboard,
+    required this.maxLines,
   });
 
   @override
-  State<_WifiFields> createState() => _WifiFieldsState();
+  State<_SimpleField> createState() => _SimpleFieldState();
 }
 
-class _WifiFieldsState extends State<_WifiFields> {
-  bool _obscurePassword = true;
+class _SimpleFieldState extends State<_SimpleField> {
+  final _controller = TextEditingController();
 
-  InputDecoration _fieldDecoration(String label) => InputDecoration(
-        labelText: label,
-        filled: true,
-        fillColor: AppColors.cardColor(context),
-        border: OutlineInputBorder(
-          borderRadius: AppRadius.cardRadius,
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: AppRadius.cardRadius,
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: AppRadius.cardRadius,
-          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-        ),
-        contentPadding: const EdgeInsets.all(AppSpacing.lg),
-      );
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: _controller,
+      onChanged: widget.onChanged,
+      maxLength: 2953,
+      decoration: _inputDecoration(context, widget.hint),
+      keyboardType: widget.keyboard,
+      maxLines: widget.maxLines,
+    );
+  }
+}
+
+// ── Multi-field form (WiFi, SMS, UPI, etc.) ───────────────────────────────────
+
+class _MultiFieldForm extends StatefulWidget {
+  final List<_FieldConfig> fields;
+  const _MultiFieldForm({required this.fields});
+
+  @override
+  State<_MultiFieldForm> createState() => _MultiFieldFormState();
+}
+
+class _MultiFieldFormState extends State<_MultiFieldForm> {
+  late final List<TextEditingController> _controllers;
+  final Map<int, bool> _obscured = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _controllers = List.generate(widget.fields.length, (_) => TextEditingController());
+    for (var i = 0; i < widget.fields.length; i++) {
+      if (widget.fields[i].obscure) _obscured[i] = true;
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final c in _controllers) {
+      c.dispose();
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      children: [
-        TextField(
-          controller: widget.ssidController,
-          onChanged: widget.onSsidChanged,
-          decoration: _fieldDecoration('Network Name (SSID)'),
-        ),
-        const Gap(AppSpacing.md),
-        TextField(
-          controller: widget.passwordController,
-          onChanged: widget.onPasswordChanged,
-          obscureText: _obscurePassword,
-          decoration: _fieldDecoration('Password').copyWith(
-            suffixIcon: IconButton(
-              icon: Icon(
-                _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                size: 20,
-                color: AppColors.textSecondary,
-              ),
-              onPressed: () =>
-                  setState(() => _obscurePassword = !_obscurePassword),
+      children: widget.fields.asMap().entries.map((entry) {
+        final i = entry.key;
+        final field = entry.value;
+
+        if (field.isDropdown) {
+          return Padding(
+            padding: EdgeInsets.only(bottom: i < widget.fields.length - 1 ? AppSpacing.md : 0),
+            child: DropdownButtonFormField<String>(
+              value: field.dropdownValue,
+              items: (field.dropdownItems ?? [])
+                  .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                  .toList(),
+              onChanged: (v) {
+                if (v != null) field.onChanged(v);
+              },
+              decoration: _inputDecoration(context, field.label, isLabel: true),
+            ),
+          );
+        }
+
+        return Padding(
+          padding: EdgeInsets.only(bottom: i < widget.fields.length - 1 ? AppSpacing.md : 0),
+          child: TextField(
+            controller: _controllers[i],
+            onChanged: field.onChanged,
+            keyboardType: field.keyboard,
+            maxLines: field.obscure ? 1 : field.maxLines,
+            obscureText: _obscured[i] ?? false,
+            decoration: _inputDecoration(context, field.label, isLabel: true).copyWith(
+              suffixIcon: field.obscure
+                  ? IconButton(
+                      icon: Icon(
+                        (_obscured[i] ?? false) ? Icons.visibility_off : Icons.visibility,
+                        size: 20,
+                        color: AppColors.textSecondary,
+                      ),
+                      onPressed: () => setState(() => _obscured[i] = !(_obscured[i] ?? false)),
+                    )
+                  : null,
             ),
           ),
-        ),
-        const Gap(AppSpacing.md),
-        DropdownButtonFormField<String>(
-          value: widget.security,
-          items: ['WPA', 'WEP', 'nopass']
-              .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-              .toList(),
-          onChanged: (v) {
-            if (v != null) widget.onSecurityChanged(v);
-          },
-          decoration: _fieldDecoration('Security'),
-        ),
-      ],
+        );
+      }).toList(),
     );
   }
+}
+
+// ── Shared input decoration ──────────────────────────────────────────────────
+
+InputDecoration _inputDecoration(BuildContext context, String hint, {bool isLabel = false}) {
+  return InputDecoration(
+    hintText: isLabel ? null : hint,
+    labelText: isLabel ? hint : null,
+    filled: true,
+    fillColor: AppColors.cardColor(context),
+    border: OutlineInputBorder(
+      borderRadius: AppRadius.cardRadius,
+      borderSide: BorderSide.none,
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: AppRadius.cardRadius,
+      borderSide: BorderSide.none,
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: AppRadius.cardRadius,
+      borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+    ),
+    contentPadding: const EdgeInsets.all(AppSpacing.lg),
+  );
 }

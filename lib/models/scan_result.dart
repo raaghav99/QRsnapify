@@ -5,12 +5,14 @@ class ScanResult {
   final String content;
   final QRType type;
   final DateTime scannedAt;
+  final bool isFavourite;
 
   const ScanResult({
     required this.id,
     required this.content,
     required this.type,
     required this.scannedAt,
+    this.isFavourite = false,
   });
 
   static QRType detectType(String content) {
@@ -27,11 +29,20 @@ class ScanResult {
     return QRType.text;
   }
 
+  ScanResult copyWith({bool? isFavourite}) => ScanResult(
+    id: id,
+    content: content,
+    type: type,
+    scannedAt: scannedAt,
+    isFavourite: isFavourite ?? this.isFavourite,
+  );
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'content': content,
     'type': type.name,
     'scannedAt': scannedAt.toIso8601String(),
+    'isFavourite': isFavourite,
   };
 
   factory ScanResult.fromJson(Map<String, dynamic> json) => ScanResult(
@@ -39,6 +50,7 @@ class ScanResult {
     content: json['content'] as String,
     type: QRType.values.firstWhere((e) => e.name == json['type'], orElse: () => QRType.text),
     scannedAt: DateTime.parse(json['scannedAt'] as String),
+    isFavourite: json['isFavourite'] as bool? ?? false,
   );
 
   static int _counter = 0;

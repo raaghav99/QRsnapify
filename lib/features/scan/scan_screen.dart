@@ -20,7 +20,7 @@ class ScanScreen extends ConsumerStatefulWidget {
 
 class _ScanScreenState extends ConsumerState<ScanScreen>
     with WidgetsBindingObserver {
-  PermissionStatus _cameraStatus = PermissionStatus.denied;
+  PermissionStatus? _cameraStatus; // null = not yet checked
   bool _isSheetOpen = false;
 
   @override
@@ -43,7 +43,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
     if (state == AppLifecycleState.paused) {
       controller.stopCamera();
     } else if (state == AppLifecycleState.resumed) {
-      if (_cameraStatus.isGranted) {
+      if (_cameraStatus?.isGranted == true) {
         // Resume the existing controller — never recreate it
         controller.startCamera();
       } else {
@@ -121,7 +121,12 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
 
   @override
   Widget build(BuildContext context) {
-    if (!_cameraStatus.isGranted) {
+    // Still checking permission — show loading, not permission UI
+    if (_cameraStatus == null) {
+      return const _CameraLoadingView();
+    }
+
+    if (!_cameraStatus!.isGranted) {
       return _PermissionView(onRequest: _requestPermission);
     }
 

@@ -44,6 +44,12 @@ class HistoryNotifier extends AsyncNotifier<List<ScanResult>> {
     state = AsyncData(await service.getHistory());
   }
 
+  Future<void> toggleFavourite(String id) async {
+    final service = ref.read(historyServiceProvider);
+    await service.toggleFavourite(id);
+    state = AsyncData(await service.getHistory());
+  }
+
   Future<void> deleteAll() async {
     final service = ref.read(historyServiceProvider);
     await service.clearAll();

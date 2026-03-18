@@ -13,6 +13,10 @@ class HistoryController {
     await ref.read(historyProvider.notifier).deleteMany(ids);
   }
 
+  Future<void> toggleFavourite(String id) async {
+    await ref.read(historyProvider.notifier).toggleFavourite(id);
+  }
+
   Future<void> deleteAll() async {
     await ref.read(historyProvider.notifier).deleteAll();
   }

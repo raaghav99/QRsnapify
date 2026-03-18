@@ -184,7 +184,7 @@ class _AgePage extends ConsumerWidget {
                       Text(
                         range.$1,
                         style: AppTextStyles.body(context).copyWith(
-                          color: isSelected ? Colors.white : AppColors.textPrimary,
+                          color: isSelected ? Colors.white : AppColors.textColor(context),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
