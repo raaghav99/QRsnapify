@@ -158,6 +158,14 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
             }
 
             final hasFavourites = items.any((e) => e.isFavourite);
+            // Auto-switch back to All when the last favourite is removed
+            if (!hasFavourites && _showFavouritesOnly) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted && _showFavouritesOnly) {
+                  setState(() => _showFavouritesOnly = false);
+                }
+              });
+            }
             final filtered = _showFavouritesOnly
                 ? items.where((e) => e.isFavourite).toList()
                 : items;

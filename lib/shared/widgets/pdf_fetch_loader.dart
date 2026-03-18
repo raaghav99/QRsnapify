@@ -57,7 +57,7 @@ class PdfFetchLoader {
     if (_dialogState != null) {
       _dialogState!.showResult(result, filePath: filePath);
       final delay = result == PdfFetchResult.success
-          ? const Duration(milliseconds: 1500)
+          ? const Duration(milliseconds: 2800)
           : const Duration(seconds: 2);
       await Future.delayed(delay);
     }
