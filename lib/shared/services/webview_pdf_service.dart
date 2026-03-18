@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:printing/printing.dart';
 import '../widgets/pdf_fetch_loader.dart';
 import '../widgets/debug_overlay.dart';
 
@@ -76,34 +75,30 @@ class _WebViewPdfCapturePageState extends State<WebViewPdfCapturePage> {
 
       if (tempPath == null || !mounted || _isAborted) return;
 
-      // Copy from Android cache to our app documents
+      // Copy from Android cache to external app storage (visible in Files app)
       PdfFetchLoader.updateProgress(0.90, stage: 'Saving');
-      final dir = await getApplicationDocumentsDirectory();
-      final pdfDir = Directory('${dir.path}/QRSnap_PDFs');
+      final extDir = await getExternalStorageDirectory();
+      final baseDir = extDir ?? await getApplicationDocumentsDirectory();
+      final pdfDir = Directory('${baseDir.path}/QRSnap_PDFs');
       if (!pdfDir.existsSync()) pdfDir.createSync(recursive: true);
       final fileName = 'QRSnap_${DateTime.now().millisecondsSinceEpoch}.pdf';
       final savedFile = File('${pdfDir.path}/$fileName');
       await File(tempPath).copy(savedFile.path);
-      DebugLogger.log('Saved: ${savedFile.path}');
+      // Delete the temp cache file
+      try { File(tempPath).deleteSync(); } catch (_) {}
+      DebugLogger.log('Saved to: ${savedFile.path}');
 
       if (!mounted || _isAborted) return;
 
-      // Show success, dismiss loader
+      // showResult() calls dismiss() internally — do NOT call dismiss() again
+      // or it will pop the page without the return value (button won't change)
       await PdfFetchLoader.showResult(
         context,
         result: PdfFetchResult.success,
         filePath: fileName,
       );
-      if (!mounted || _isAborted) return;
-      PdfFetchLoader.dismiss(context);
 
-      // Open print dialog so user can print or save via Android system
-      await Printing.layoutPdf(
-        name: fileName,
-        onLayout: (_) => savedFile.readAsBytes(),
-      );
-
-      if (mounted) Navigator.of(context).pop(savedFile.path);
+      if (mounted && !_isAborted) Navigator.of(context).pop(savedFile.path);
     } on PlatformException catch (e) {
       _progressTimer?.cancel();
       DebugLogger.log('PlatformException [${e.code}]: ${e.message}');
