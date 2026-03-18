@@ -9,11 +9,15 @@ class HistoryService {
   Future<List<ScanResult>> getHistory() async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getStringList(_key) ?? [];
-    return raw
-        .map((e) => ScanResult.fromJson(jsonDecode(e) as Map<String, dynamic>))
-        .toList()
-        .reversed
-        .toList();
+    final results = <ScanResult>[];
+    for (final e in raw) {
+      try {
+        results.add(ScanResult.fromJson(jsonDecode(e) as Map<String, dynamic>));
+      } catch (_) {
+        // Skip corrupted entries rather than crashing
+      }
+    }
+    return results.reversed.toList();
   }
 
   Future<void> addScan(ScanResult result) async {
@@ -28,8 +32,12 @@ class HistoryService {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getStringList(_key) ?? [];
     raw.removeWhere((e) {
-      final map = jsonDecode(e) as Map<String, dynamic>;
-      return map['id'] == id;
+      try {
+        final map = jsonDecode(e) as Map<String, dynamic>;
+        return map['id'] == id;
+      } catch (_) {
+        return true; // Remove corrupted entries
+      }
     });
     await prefs.setStringList(_key, raw);
   }
@@ -40,8 +48,12 @@ class HistoryService {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getStringList(_key) ?? [];
     raw.removeWhere((e) {
-      final map = jsonDecode(e) as Map<String, dynamic>;
-      return ids.contains(map['id']);
+      try {
+        final map = jsonDecode(e) as Map<String, dynamic>;
+        return ids.contains(map['id']);
+      } catch (_) {
+        return true; // Remove corrupted entries
+      }
     });
     await prefs.setStringList(_key, raw);
   }
@@ -50,12 +62,16 @@ class HistoryService {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getStringList(_key) ?? [];
     final updated = raw.map((e) {
-      final map = jsonDecode(e) as Map<String, dynamic>;
-      if (map['id'] == id) {
-        map['isFavourite'] = !(map['isFavourite'] as bool? ?? false);
-        return jsonEncode(map);
+      try {
+        final map = jsonDecode(e) as Map<String, dynamic>;
+        if (map['id'] == id) {
+          map['isFavourite'] = !(map['isFavourite'] as bool? ?? false);
+          return jsonEncode(map);
+        }
+        return e;
+      } catch (_) {
+        return e; // Keep unparseable entries as-is
       }
-      return e;
     }).toList();
     await prefs.setStringList(_key, updated);
   }

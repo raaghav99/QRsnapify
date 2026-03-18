@@ -47,17 +47,35 @@ class _QrResultSheetState extends ConsumerState<QrResultSheet> {
       };
 
   // ── WiFi content parser ──────────────────────────────────────────────────
+  // WiFi QR format: WIFI:T:WPA;S:myNet;P:myPass;;
+  // Special chars (;, \, ", ,) are escaped with backslash in SSID/password
   Map<String, String> _parseWifi(String raw) {
-    final ssid = RegExp(r'S:([^;]*)').firstMatch(raw)?.group(1) ?? raw;
-    final password = RegExp(r'P:([^;]*)').firstMatch(raw)?.group(1) ?? '';
-    final security = RegExp(r'T:([^;]*)').firstMatch(raw)?.group(1) ?? '';
-    return {'ssid': ssid, 'password': password, 'security': security};
+    // Matches field value allowing backslash-escaped characters
+    String? extract(String key) =>
+        RegExp('$key:((?:[^;\\\\]|\\\\.)*)').firstMatch(raw)?.group(1)?.replaceAllMapped(
+          RegExp(r'\\(.)'),
+          (m) => m.group(1)!, // unescape \; \\ \" etc.
+        );
+    return {
+      'ssid': extract('S') ?? raw,
+      'password': extract('P') ?? '',
+      'security': extract('T') ?? '',
+    };
   }
 
   // ── Launch phone/email actions ───────────────────────────────────────────
   Future<void> _launchUrl(String url) async {
     final uri = Uri.tryParse(url);
-    if (uri != null) await launchUrl(uri);
+    if (uri == null) return;
+    try {
+      await launchUrl(uri);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not open: $url')),
+        );
+      }
+    }
   }
 
   // ── Internal Security Check (VirusTotal-like) ────────────────────────────

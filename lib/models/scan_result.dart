@@ -21,7 +21,10 @@ class ScanResult {
       return QRType.url;
     } else if (lower.startsWith('mailto:') || RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(lower)) {
       return QRType.email;
-    } else if (lower.startsWith('tel:') || RegExp(r'^\+?[\d\s\-\(\)]{7,}$').hasMatch(lower)) {
+    } else if (lower.startsWith('tel:') || RegExp(r'^\+[\d\s\-\(\)]{6,}$').hasMatch(lower)) {
+      // Require `tel:` prefix OR international format (starts with +)
+      // Plain digit strings without `tel:` are treated as text to avoid misclassifying
+      // product codes, version numbers, or other numeric QR content as phone numbers
       return QRType.phone;
     } else if (lower.startsWith('wifi:')) {
       return QRType.wifi;

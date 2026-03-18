@@ -43,20 +43,20 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
     if (state == AppLifecycleState.paused) {
       controller.stopCamera();
     } else if (state == AppLifecycleState.resumed) {
-      if (_cameraStatus?.isGranted == true) {
-        // Resume the existing controller — never recreate it
-        controller.startCamera();
-      } else {
-        _checkPermission();
-      }
+      // Always re-check — user may have revoked/granted permission in Settings
+      _checkPermission();
     }
   }
 
   Future<void> _checkPermission() async {
     final status = await Permission.camera.status;
-    if (mounted) setState(() => _cameraStatus = status);
+    if (!mounted) return;
+    setState(() => _cameraStatus = status);
     if (status.isGranted) {
-      ref.read(scanControllerProvider.notifier).initCamera();
+      final notifier = ref.read(scanControllerProvider.notifier);
+      notifier.initCamera();
+      // If camera was already initialized (e.g. resuming), just restart it
+      notifier.startCamera();
     }
   }
 

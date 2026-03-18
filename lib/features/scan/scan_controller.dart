@@ -56,7 +56,8 @@ class ScanController extends StateNotifier<ScanState> {
     } catch (_) {}
   }
 
-  void disposeCamera() {
+  Future<void> disposeCamera() async {
+    await stopCamera();
     cameraController?.dispose();
     cameraController = null;
     state = state.copyWith(isCameraReady: false);

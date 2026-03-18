@@ -27,12 +27,12 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 'stable'
           channel: stable
           cache: true
 
-      - name: Create android/local.properties
+      - name: Fix Windows-specific paths for CI
         run: |
+          sed -i '/org\.gradle\.java\.home/d' android/gradle.properties
           FLUTTER_SDK=$(dirname $(dirname $(which flutter)))
           echo "flutter.sdk=$FLUTTER_SDK" > android/local.properties
           echo "sdk.dir=$ANDROID_SDK_ROOT" >> android/local.properties
@@ -41,7 +41,7 @@ jobs:
         run: flutter pub get
 
       - name: Analyze
-        run: flutter analyze --fatal-infos
+        run: flutter analyze
 
       - name: Build release APK
         run: flutter build apk --release

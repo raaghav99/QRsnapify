@@ -42,15 +42,15 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
     if (!state.hasContent) return;
 
     setState(() => _isSaving = true);
+    File? tempFile;
     try {
       final bytes = await _captureQr();
       if (bytes == null) return;
 
       final dir = await getTemporaryDirectory();
-      final file = File(
-          '${dir.path}/qrsnap_${DateTime.now().millisecondsSinceEpoch}.png');
-      await file.writeAsBytes(bytes);
-      await Gal.putImage(file.path, album: 'QRSnap');
+      tempFile = File('${dir.path}/qrsnap_save.png');
+      await tempFile.writeAsBytes(bytes);
+      await Gal.putImage(tempFile.path, album: 'QRSnap');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -64,6 +64,7 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
         );
       }
     } finally {
+      tempFile?.delete().ignore(); // Clean up temp file
       if (mounted) setState(() => _isSaving = false);
     }
   }
@@ -72,12 +73,20 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
     final state = ref.read(generateControllerProvider);
     if (!state.hasContent) return;
 
-    final bytes = await _captureQr();
-    if (bytes == null) return;
-    final dir = await getTemporaryDirectory();
-    final file = File('${dir.path}/qrsnap_share.png');
-    await file.writeAsBytes(bytes);
-    await Share.shareXFiles([XFile(file.path)], text: 'QR Code from QRSnap');
+    try {
+      final bytes = await _captureQr();
+      if (bytes == null) return;
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/qrsnap_share.png');
+      await file.writeAsBytes(bytes);
+      await Share.shareXFiles([XFile(file.path)], text: 'QR Code from QRSnap');
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not share: $e')),
+        );
+      }
+    }
   }
 
   @override
