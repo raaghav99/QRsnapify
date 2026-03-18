@@ -1,5 +1,10 @@
 package com.qrsnap.qrsnap
 
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Rect
+import android.graphics.RectF
 import android.graphics.pdf.PdfDocument
 import android.os.Handler
 import android.os.Looper
@@ -40,6 +45,7 @@ class MainActivity : FlutterActivity() {
     private fun generatePdf(url: String, result: MethodChannel.Result) {
         Handler(Looper.getMainLooper()).post {
             var resultSent = false
+            var cleanedUp = false
 
             val webView = WebView(this)
             webView.settings.apply {
@@ -48,7 +54,7 @@ class MainActivity : FlutterActivity() {
                 loadWithOverviewMode = true
                 useWideViewPort = true
             }
-            // Software rendering = accurate PDF output
+            // Software rendering = accurate draw() output
             webView.setLayerType(View.LAYER_TYPE_SOFTWARE, null)
 
             // Attach to window so WebView renders, but invisible so it doesn't flash
@@ -64,7 +70,10 @@ class MainActivity : FlutterActivity() {
                 ViewGroup.LayoutParams.MATCH_PARENT
             ))
 
+            // Idempotent — safe to call from background thread via Handler
             fun cleanup() {
+                if (cleanedUp) return
+                cleanedUp = true
                 root.removeView(container)
                 webView.destroy()
             }
@@ -104,7 +113,6 @@ class MainActivity : FlutterActivity() {
                     if (handled) return
                     handled = true
 
-                    // Poll until content height stabilizes (no fixed wait — handles any JS framework)
                     pollUntilStable(0, 0) { contentHeight ->
                         if (resultSent) return@pollUntilStable
                         val contentWidth = view.width
@@ -125,40 +133,74 @@ class MainActivity : FlutterActivity() {
                         Handler(Looper.getMainLooper()).postDelayed({
                             if (resultSent) return@postDelayed
                             try {
-                                val outputFile = File(cacheDir, "qrsnap_${System.currentTimeMillis()}.pdf")
+                                // ── Step 1: ONE draw call on the main thread ──────────────────
+                                // Render the entire WebView into a bitmap once.
+                                // This replaces per-page draw() calls that each blocked the UI.
+                                val bitmap = Bitmap.createBitmap(
+                                    contentWidth, contentHeight, Bitmap.Config.ARGB_8888
+                                )
+                                view.draw(Canvas(bitmap))
 
-                                // A4 at 72 DPI = 595 x 842 points
+                                // WebView is no longer needed — free it immediately
+                                cleanup()
+
+                                // ── Step 2: PDF generation on a background thread ─────────────
+                                // Slicing bitmap into pages is pure memory work — no UI thread needed.
+                                val outputFile = File(cacheDir, "qrsnap_${System.currentTimeMillis()}.pdf")
                                 val a4W = 595
                                 val a4H = 842
                                 val scale = a4W.toFloat() / contentWidth.toFloat()
                                 val totalPdfH = (contentHeight * scale).toInt()
 
-                                val pdfDoc = PdfDocument()
-                                var yOffset = 0
-                                var pageNum = 1
+                                Thread {
+                                    try {
+                                        val pdfDoc = PdfDocument()
+                                        val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+                                        var yOffset = 0
+                                        var pageNum = 1
 
-                                while (yOffset < totalPdfH) {
-                                    val pageH = minOf(a4H, totalPdfH - yOffset)
-                                    val pageInfo = PdfDocument.PageInfo.Builder(a4W, pageH, pageNum).create()
-                                    val page = pdfDoc.startPage(pageInfo)
-                                    page.canvas.scale(scale, scale)
-                                    page.canvas.translate(0f, -yOffset / scale)
-                                    view.draw(page.canvas)
-                                    pdfDoc.finishPage(page)
-                                    yOffset += a4H
-                                    pageNum++
-                                }
+                                        while (yOffset < totalPdfH) {
+                                            val pageH = minOf(a4H, totalPdfH - yOffset)
+                                            val pageInfo = PdfDocument.PageInfo.Builder(a4W, pageH, pageNum).create()
+                                            val page = pdfDoc.startPage(pageInfo)
 
-                                FileOutputStream(outputFile).use { fos ->
-                                    pdfDoc.writeTo(fos)
-                                }
-                                pdfDoc.close()
+                                            // Source: slice of bitmap in original pixel space
+                                            val srcY = (yOffset / scale).toInt()
+                                            val srcH = minOf(
+                                                (pageH / scale).toInt() + 1,
+                                                contentHeight - srcY
+                                            )
+                                            if (srcH > 0) {
+                                                val src = Rect(0, srcY, contentWidth, srcY + srcH)
+                                                val dst = RectF(0f, 0f, a4W.toFloat(), pageH.toFloat())
+                                                page.canvas.drawBitmap(bitmap, src, dst, paint)
+                                            }
 
-                                if (!resultSent) {
-                                    resultSent = true
-                                    cleanup()
-                                    result.success(outputFile.absolutePath)
-                                }
+                                            pdfDoc.finishPage(page)
+                                            yOffset += a4H
+                                            pageNum++
+                                        }
+
+                                        FileOutputStream(outputFile).use { fos ->
+                                            pdfDoc.writeTo(fos)
+                                        }
+                                        pdfDoc.close()
+                                        bitmap.recycle()
+
+                                        Handler(Looper.getMainLooper()).post {
+                                            if (!resultSent) {
+                                                resultSent = true
+                                                result.success(outputFile.absolutePath)
+                                            }
+                                        }
+                                    } catch (e: Exception) {
+                                        bitmap.recycle()
+                                        Handler(Looper.getMainLooper()).post {
+                                            sendError("PDF_ERROR", e.message ?: "Unknown error")
+                                        }
+                                    }
+                                }.start()
+
                             } catch (e: Exception) {
                                 sendError("PDF_ERROR", e.message ?: "Unknown error")
                             }
