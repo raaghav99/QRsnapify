@@ -234,20 +234,46 @@ class MainActivity : FlutterActivity() {
                                                         breakPoints.add(cappedHeight) // sentinel: end of content
                                                         Log.d(TAG, "Smart breaks: ${breakPoints.size - 1} pages, breaks=$breakPoints")
 
-                                                        // Render each slice as a PDF page
+                                                        // Clone exact edge pixel row 1pt at each break boundary
+                                                        val blendPt = 1 // PDF points of cloned-edge padding
+
                                                         for (i in 0 until breakPoints.size - 1) {
                                                             val srcY = breakPoints[i]
                                                             val srcBottom = breakPoints[i + 1]
                                                             val srcH = srcBottom - srcY
                                                             if (srcH <= 0) continue
 
-                                                            val pageH = (srcH * scale).toInt().coerceIn(1, a4H)
+                                                            val isFirst = i == 0
+                                                            val isLast = i == breakPoints.size - 2
+                                                            val topBlend = if (isFirst) 0 else blendPt
+                                                            val botBlend = if (isLast) 0 else blendPt
+                                                            val contentH = (srcH * scale).toInt().coerceIn(1, a4H)
+                                                            val pageH = contentH + topBlend + botBlend
                                                             val pageInfo = PdfDocument.PageInfo.Builder(a4W, pageH, pageNum).create()
                                                             val page = pdfDoc.startPage(pageInfo)
 
+                                                            if (topBlend > 0) {
+                                                                val rowBmp = Bitmap.createBitmap(bitmap, 0, srcY, contentWidth, 1)
+                                                                for (r in 0 until topBlend) {
+                                                                    val d = RectF(0f, r.toFloat(), a4W.toFloat(), (r + 1).toFloat())
+                                                                    page.canvas.drawBitmap(rowBmp, null, d, paint)
+                                                                }
+                                                                rowBmp.recycle()
+                                                            }
+
                                                             val src = Rect(0, srcY, contentWidth, srcBottom)
-                                                            val dst = RectF(0f, 0f, a4W.toFloat(), pageH.toFloat())
+                                                            val dst = RectF(0f, topBlend.toFloat(), a4W.toFloat(), (topBlend + contentH).toFloat())
                                                             page.canvas.drawBitmap(bitmap, src, dst, paint)
+
+                                                            if (botBlend > 0) {
+                                                                val rowBmp = Bitmap.createBitmap(bitmap, 0, (srcBottom - 1).coerceAtMost(cappedHeight - 1), contentWidth, 1)
+                                                                for (r in 0 until botBlend) {
+                                                                    val y = topBlend + contentH + r
+                                                                    val d = RectF(0f, y.toFloat(), a4W.toFloat(), (y + 1).toFloat())
+                                                                    page.canvas.drawBitmap(rowBmp, null, d, paint)
+                                                                }
+                                                                rowBmp.recycle()
+                                                            }
 
                                                             pdfDoc.finishPage(page)
                                                             pageNum++
