@@ -9,6 +9,7 @@ import '../../app/providers.dart';
 import '../../app/theme.dart';
 import '../../models/scan_result.dart';
 import '../../shared/widgets/qr_result_sheet.dart';
+import '../settings/settings_screen.dart';
 import 'scan_controller.dart';
 
 class ScanScreen extends ConsumerStatefulWidget {
@@ -166,6 +167,14 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
                     onTap: () =>
                         ref.read(scanControllerProvider.notifier).toggleTorch(),
                   ),
+                  _CircleButton(
+                    icon: Iconsax.setting_2,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const SettingsScreen()),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -218,19 +227,19 @@ class _CameraLoadingView extends StatelessWidget {
               width: 200,
               height: 200,
               child: Stack(
-                children: const [
-                  Positioned(top: 0, left: 0, child: _Corner(topLeft: true)),
-                  Positioned(top: 0, right: 0, child: _Corner(topRight: true)),
-                  Positioned(
+                children: [
+                  const Positioned(top: 0, left: 0, child: _Corner(topLeft: true)),
+                  const Positioned(top: 0, right: 0, child: _Corner(topRight: true)),
+                  const Positioned(
                       bottom: 0, left: 0, child: _Corner(bottomLeft: true)),
-                  Positioned(
+                  const Positioned(
                       bottom: 0, right: 0, child: _Corner(bottomRight: true)),
                   Center(
                     child: SizedBox(
                       width: 28,
                       height: 28,
                       child: CircularProgressIndicator(
-                        color: AppColors.primary,
+                        color: Theme.of(context).colorScheme.primary,
                         strokeWidth: 2.5,
                       ),
                     ),
@@ -308,7 +317,7 @@ class _Corner extends StatelessWidget {
           topRight: topRight,
           bottomLeft: bottomLeft,
           bottomRight: bottomRight,
-          color: AppColors.primary,
+          color: Theme.of(context).colorScheme.primary,
           thickness: 3.5,
         ),
       ),
@@ -409,15 +418,15 @@ class _ScanLineState extends State<_ScanLine>
             gradient: LinearGradient(
               colors: [
                 Colors.transparent,
-                AppColors.primary.withValues(alpha: 0.8),
-                AppColors.primary,
-                AppColors.primary.withValues(alpha: 0.8),
+                Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+                Theme.of(context).colorScheme.primary,
+                Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
                 Colors.transparent,
               ],
             ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.4),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
                 blurRadius: 6,
               ),
             ],
@@ -500,11 +509,11 @@ class _PermissionView extends StatelessWidget {
                 width: 88,
                 height: 88,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.08),
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.camera_alt_outlined,
-                    size: 40, color: AppColors.primary),
+                child: Icon(Icons.camera_alt_outlined,
+                    size: 40, color: Theme.of(context).colorScheme.primary),
               ),
               const SizedBox(height: AppSpacing.xl),
               Text('Camera Access Needed',

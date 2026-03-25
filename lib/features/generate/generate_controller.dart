@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-enum GenerateType { url, text, email, phone, sms, wifi, upi, whatsapp, vcard }
+enum GenerateType { url, text, email, phone, sms, wifi, upi, whatsapp, vcard, geo }
 
 class GenerateState {
   final GenerateType selectedType;
@@ -24,6 +24,10 @@ class GenerateState {
   final String vcardPhone;
   final String vcardEmail;
   final String vcardOrg;
+  // Geo fields
+  final String geoLat;
+  final String geoLng;
+  final String geoLabel;
 
   const GenerateState({
     this.selectedType = GenerateType.text,
@@ -42,6 +46,9 @@ class GenerateState {
     this.vcardPhone = '',
     this.vcardEmail = '',
     this.vcardOrg = '',
+    this.geoLat = '',
+    this.geoLng = '',
+    this.geoLabel = '',
   });
 
   String get qrData {
@@ -55,6 +62,9 @@ class GenerateState {
       GenerateType.upi => upiVpa.isEmpty ? '' : _buildUpiString(),
       GenerateType.whatsapp => waPhone.isEmpty ? '' : 'https://wa.me/${waPhone.replaceAll(RegExp(r'[^\d]'), '')}${waMessage.isNotEmpty ? '?text=${Uri.encodeComponent(waMessage)}' : ''}',
       GenerateType.vcard => vcardName.isEmpty ? '' : _buildVcardString(),
+      GenerateType.geo => (geoLat.isEmpty || geoLng.isEmpty)
+          ? ''
+          : 'geo:$geoLat,$geoLng${geoLabel.isNotEmpty ? '?q=${Uri.encodeComponent(geoLabel)}' : ''}',
     };
   }
 
@@ -71,7 +81,7 @@ class GenerateState {
       'BEGIN:VCARD',
       'VERSION:3.0',
       'FN:$vcardName',
-      'N:$vcardName',
+      'N:;$vcardName;;;',
     ];
     if (vcardPhone.isNotEmpty) lines.add('TEL:$vcardPhone');
     if (vcardEmail.isNotEmpty) lines.add('EMAIL:$vcardEmail');
@@ -99,6 +109,9 @@ class GenerateState {
     String? vcardPhone,
     String? vcardEmail,
     String? vcardOrg,
+    String? geoLat,
+    String? geoLng,
+    String? geoLabel,
   }) => GenerateState(
     selectedType: selectedType ?? this.selectedType,
     input: input ?? this.input,
@@ -116,6 +129,9 @@ class GenerateState {
     vcardPhone: vcardPhone ?? this.vcardPhone,
     vcardEmail: vcardEmail ?? this.vcardEmail,
     vcardOrg: vcardOrg ?? this.vcardOrg,
+    geoLat: geoLat ?? this.geoLat,
+    geoLng: geoLng ?? this.geoLng,
+    geoLabel: geoLabel ?? this.geoLabel,
   );
 }
 
@@ -138,6 +154,9 @@ class GenerateController extends StateNotifier<GenerateState> {
   void setVcardPhone(String value) => state = state.copyWith(vcardPhone: value);
   void setVcardEmail(String value) => state = state.copyWith(vcardEmail: value);
   void setVcardOrg(String value) => state = state.copyWith(vcardOrg: value);
+  void setGeoLat(String value) => state = state.copyWith(geoLat: value);
+  void setGeoLng(String value) => state = state.copyWith(geoLng: value);
+  void setGeoLabel(String value) => state = state.copyWith(geoLabel: value);
 }
 
 // No autoDispose — IndexedStack keeps all tabs in tree; state must survive tab switches

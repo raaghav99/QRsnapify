@@ -159,9 +159,7 @@ class _PdfFetchLoaderDialogState extends State<_PdfFetchLoaderDialog>
       _progress = result == PdfFetchResult.success ? 1.0 : _progress;
       _isFadingOut = false;
       _resultMessage = switch (result) {
-        PdfFetchResult.success => filePath != null
-            ? 'PDF ready! Saved to $filePath'
-            : 'PDF ready!',
+        PdfFetchResult.success => 'PDF saved to QRSnap_PDFs folder',
         PdfFetchResult.timeout =>
           'Something went wrong. The site might be down.',
         PdfFetchResult.networkError =>
@@ -183,7 +181,7 @@ class _PdfFetchLoaderDialogState extends State<_PdfFetchLoaderDialog>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isSuccess = _resultMessage != null &&
-        _resultMessage!.startsWith('PDF ready');
+        _resultMessage!.startsWith('PDF saved');
     final isError = _resultMessage != null && !isSuccess;
 
     return Center(
@@ -206,6 +204,7 @@ class _PdfFetchLoaderDialogState extends State<_PdfFetchLoaderDialog>
                     painter: WindPainter(
                       progress: _windController.value,
                       brightness: Theme.of(context).brightness,
+                      primaryColor: Theme.of(context).colorScheme.primary,
                     ),
                   ),
                 ),
@@ -228,9 +227,9 @@ class _PdfFetchLoaderDialogState extends State<_PdfFetchLoaderDialog>
                           builder: (_, value, __) => LinearProgressIndicator(
                             value: value,
                             backgroundColor:
-                                AppColors.primary.withValues(alpha: 0.15),
+                                Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
                             valueColor: AlwaysStoppedAnimation<Color>(
-                              isError ? AppColors.error : AppColors.primary,
+                              isError ? AppColors.error : Theme.of(context).colorScheme.primary,
                             ),
                           ),
                         ),
@@ -283,7 +282,7 @@ class _PdfFetchLoaderDialogState extends State<_PdfFetchLoaderDialog>
                                   style: GoogleFonts.poppins(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w500,
-                                    color: AppColors.primary,
+                                    color: Theme.of(context).colorScheme.primary,
                                   ),
                                 ),
                               ),

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
@@ -47,7 +48,9 @@ class ScanController extends StateNotifier<ScanState> {
   Future<void> startCamera() async {
     try {
       await cameraController?.start();
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Camera start failed: $e');
+    }
   }
 
   Future<void> stopCamera() async {

@@ -75,7 +75,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 controller: _pageController,
                 count: 3,
                 effect: ExpandingDotsEffect(
-                  activeDotColor: AppColors.primary,
+                  activeDotColor: Theme.of(context).colorScheme.primary,
                   dotColor: AppColors.textSecondary.withValues(alpha: 0.3),
                   dotHeight: 8,
                   dotWidth: 8,
@@ -105,7 +105,7 @@ class _WelcomePage extends StatelessWidget {
             width: 100,
             height: 100,
             decoration: BoxDecoration(
-              color: AppColors.primary,
+              color: Theme.of(context).colorScheme.primary,
               borderRadius: BorderRadius.circular(28),
             ),
             child: const Icon(Icons.qr_code_2_rounded, size: 56, color: Colors.white),
@@ -170,11 +170,11 @@ class _AgePage extends ConsumerWidget {
                   duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.all(AppSpacing.lg),
                   decoration: BoxDecoration(
-                    color: isSelected ? AppColors.primary : AppColors.cardColor(context),
+                    color: isSelected ? Theme.of(context).colorScheme.primary : AppColors.cardColor(context),
                     borderRadius: AppRadius.cardRadius,
                     border: Border.all(
                       color: isSelected
-                          ? AppColors.primary
+                          ? Theme.of(context).colorScheme.primary
                           : AppColors.textSubColor(context).withValues(alpha: 0.2),
                     ),
                     boxShadow: const [AppShadows.card],

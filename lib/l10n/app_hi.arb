@@ -1,0 +1,23 @@
+{
+  "@@locale": "hi",
+  "appName": "QRSnap",
+  "tabScan": "स्कैन",
+  "tabGenerate": "बनाएं",
+  "tabHistory": "इतिहास",
+  "scanHint": "QR कोड पर कैमरा करें",
+  "copyLabel": "कॉपी",
+  "shareLabel": "शेयर",
+  "savePdf": "PDF सेव करें",
+  "openPdf": "PDF खोलें",
+  "upiPaymentTitle": "UPI भुगतान",
+  "upiWarningSendingMoney": "You Are About to Send Money",
+  "upiWarningSendingMoneyHindi": "आप पैसे भेज रहे हैं",
+  "upiOpenApp": "UPI ऐप खोलें",
+  "settingsTitle": "सेटिंग्स",
+  "appearanceSection": "दिखावट",
+  "weeklyColorsLabel": "साप्ताहिक रंग",
+  "weeklyColorsSubtitle": "हर दिन के लिए अपना रंग चुनें",
+  "colourPaletteLabel": "रंग पैलेट",
+  "noThreatFound": "कोई खतरा नहीं मिला (स्थानीय जांच)",
+  "securityWarnings": "सुरक्षा चेतावनियाँ"
+}

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+/// Set to true to enable the in-app debug console. Keep false in production.
+const kDebugOverlayEnabled = false;
+
 /// Simple in-app debug logger. Call [DebugLogger.log()] anywhere.
 /// Wrap any widget with [DebugOverlay] to show a floating log console.
 class DebugLogger extends ChangeNotifier {
@@ -11,6 +14,7 @@ class DebugLogger extends ChangeNotifier {
   List<_LogEntry> get entries => List.unmodifiable(_entries);
 
   static void log(String message) {
+    if (!kDebugOverlayEnabled) return;
     final entry = _LogEntry(
       time: DateTime.now(),
       message: message,

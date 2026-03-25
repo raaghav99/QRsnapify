@@ -93,15 +93,15 @@ abstract class AppTextStyles {
       );
 }
 
-ThemeData appTheme() {
+ThemeData appTheme([Color primaryColor = AppColors.primary]) {
   return ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
     colorScheme: ColorScheme.fromSeed(
-      seedColor: AppColors.primary,
+      seedColor: primaryColor,
       brightness: Brightness.light,
       surface: AppColors.surface,
-      primary: AppColors.primary,
+      primary: primaryColor,
       error: AppColors.error,
     ),
     scaffoldBackgroundColor: AppColors.background,
@@ -113,7 +113,7 @@ ThemeData appTheme() {
     textTheme: GoogleFonts.poppinsTextTheme(),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.primary,
+        backgroundColor: primaryColor,
         foregroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: AppRadius.buttonRadius),
         elevation: 0,
@@ -130,21 +130,21 @@ ThemeData appTheme() {
     ),
     navigationBarTheme: NavigationBarThemeData(
       backgroundColor: AppColors.surface,
-      indicatorColor: AppColors.primary.withValues(alpha: 0.12),
+      indicatorColor: primaryColor.withValues(alpha: 0.12),
       elevation: 0,
     ),
   );
 }
 
-ThemeData appDarkTheme() {
+ThemeData appDarkTheme([Color primaryColor = AppColors.primary]) {
   return ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
     colorScheme: ColorScheme.fromSeed(
-      seedColor: AppColors.primary,
+      seedColor: primaryColor,
       brightness: Brightness.dark,
       surface: AppColors.surfaceDark,
-      primary: AppColors.primary,
+      primary: primaryColor,
       error: AppColors.error,
     ),
     scaffoldBackgroundColor: AppColors.backgroundDark,
@@ -156,7 +156,7 @@ ThemeData appDarkTheme() {
     textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.primary,
+        backgroundColor: primaryColor,
         foregroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: AppRadius.buttonRadius),
         elevation: 0,
@@ -173,7 +173,7 @@ ThemeData appDarkTheme() {
     ),
     navigationBarTheme: NavigationBarThemeData(
       backgroundColor: AppColors.surfaceDark,
-      indicatorColor: AppColors.primary.withValues(alpha: 0.18),
+      indicatorColor: primaryColor.withValues(alpha: 0.18),
       elevation: 0,
     ),
   );

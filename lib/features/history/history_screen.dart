@@ -104,7 +104,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                           _selectedIds.length == visible.length
                               ? 'Deselect all'
                               : 'Select all',
-                          style: const TextStyle(color: AppColors.primary),
+                          style: TextStyle(color: Theme.of(context).colorScheme.primary),
                         ),
                       );
                     },
@@ -284,12 +284,12 @@ class _FilterChip extends StatelessWidget {
             horizontal: AppSpacing.md, vertical: AppSpacing.sm),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primary
+              ? Theme.of(context).colorScheme.primary
               : AppColors.cardColor(context),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected
-                ? AppColors.primary
+                ? Theme.of(context).colorScheme.primary
                 : AppColors.textSubColor(context).withValues(alpha: 0.2),
           ),
         ),
@@ -335,6 +335,7 @@ class _HistoryItem extends StatelessWidget {
         QRType.phone => Iconsax.call,
         QRType.wifi => Iconsax.wifi,
         QRType.text => Iconsax.document_text,
+        QRType.upi => Iconsax.wallet_money,
       };
 
   String _formatDate(DateTime dt) {
@@ -359,12 +360,12 @@ class _HistoryItem extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primary.withValues(alpha: 0.1)
+              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
               : AppColors.cardColor(context),
           borderRadius: AppRadius.cardRadius,
           border: isSelected
               ? Border.all(
-                  color: AppColors.primary.withValues(alpha: 0.4), width: 1.5)
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4), width: 1.5)
               : null,
           boxShadow: const [AppShadows.card],
         ),
@@ -378,7 +379,7 @@ class _HistoryItem extends StatelessWidget {
                   key: ValueKey(isSelected),
                   value: isSelected,
                   onChanged: (_) => onTap(),
-                  activeColor: AppColors.primary,
+                  activeColor: Theme.of(context).colorScheme.primary,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(4)),
                   visualDensity: VisualDensity.compact,
@@ -389,11 +390,11 @@ class _HistoryItem extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(AppSpacing.sm),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: AppRadius.chipRadius,
                 ),
                 child:
-                    Icon(_typeIcon(item.type), color: AppColors.primary, size: 18),
+                    Icon(_typeIcon(item.type), color: Theme.of(context).colorScheme.primary, size: 18),
               ),
             const Gap(AppSpacing.md),
             Expanded(

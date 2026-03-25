@@ -1,12 +1,13 @@
+import 'dart:math' show log;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:gap/gap.dart';
-import 'package:iconsax/iconsax.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gap/gap.dart';
+import 'package:iconsax/iconsax.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/scan_result.dart';
@@ -36,6 +37,7 @@ class _QrResultSheetState extends ConsumerState<QrResultSheet> {
         QRType.phone => Iconsax.call,
         QRType.wifi => Iconsax.wifi,
         QRType.text => Iconsax.document_text,
+        QRType.upi => Iconsax.wallet_money,
       };
 
   String _typeLabel(QRType type) => switch (type) {
@@ -44,6 +46,7 @@ class _QrResultSheetState extends ConsumerState<QrResultSheet> {
         QRType.phone => 'Phone Number',
         QRType.wifi => 'WiFi Network',
         QRType.text => 'Plain Text',
+        QRType.upi => 'UPI Payment',
       };
 
   // ── WiFi content parser ──────────────────────────────────────────────────
@@ -76,6 +79,38 @@ class _QrResultSheetState extends ConsumerState<QrResultSheet> {
         );
       }
     }
+  }
+
+  // ── Security helper algorithms ────────────────────────────────────────────
+
+  int _levenshtein(String a, String b) {
+    final m = a.length, n = b.length;
+    final dp = List.generate(m + 1, (_) => List.filled(n + 1, 0));
+    for (var i = 0; i <= m; i++) dp[i][0] = i;
+    for (var j = 0; j <= n; j++) dp[0][j] = j;
+    for (var i = 1; i <= m; i++) {
+      for (var j = 1; j <= n; j++) {
+        if (a[i - 1] == b[j - 1]) {
+          dp[i][j] = dp[i - 1][j - 1];
+        } else {
+          final s = dp[i - 1][j - 1], d = dp[i - 1][j], ins = dp[i][j - 1];
+          dp[i][j] = 1 + (s < d ? (s < ins ? s : ins) : (d < ins ? d : ins));
+        }
+      }
+    }
+    return dp[m][n];
+  }
+
+  double _shannonEntropy(String s) {
+    if (s.isEmpty) return 0;
+    final freq = <int, int>{};
+    for (final c in s.codeUnits) {
+      freq[c] = (freq[c] ?? 0) + 1;
+    }
+    return freq.values.fold(0.0, (sum, count) {
+      final p = count / s.length;
+      return sum - p * (log(p) / log(2));
+    });
   }
 
   // ── Internal Security Check (VirusTotal-like) ────────────────────────────
@@ -135,6 +170,52 @@ class _QrResultSheetState extends ConsumerState<QrResultSheet> {
       isSafe = false;
     }
 
+    // Check 8: Punycode / internationalized domain name
+    if (lowerUrl.contains('xn--')) {
+      warnings.add('⚠️ Internationalized domain (possible lookalike script)');
+      isSafe = false;
+    }
+
+    // Check 9: Brand name appearing in subdomain (e.g. paypal.com.evil.xyz)
+    final host = Uri.tryParse(url)?.host ?? '';
+    final hostParts = host.split('.');
+    if (hostParts.length > 2) {
+      final registrable = hostParts.sublist(hostParts.length - 2).join('.');
+      final subdomain = hostParts.sublist(0, hostParts.length - 2).join('.');
+      const subdomainBrands = [
+        'paypal', 'amazon', 'google', 'facebook', 'apple', 'microsoft',
+        'netflix', 'instagram', 'whatsapp', 'paytm', 'phonepe', 'gpay'
+      ];
+      if (subdomainBrands.any((b) => subdomain.contains(b)) &&
+          !_isKnownDomain(registrable)) {
+        warnings.add('⚠️ Trusted brand in subdomain — possible impersonation');
+        isSafe = false;
+      }
+    }
+
+    // Check 10: Typosquatting via Levenshtein distance
+    final cleanHost = (Uri.tryParse(url)?.host ?? '').replaceFirst('www.', '');
+    final domainName = cleanHost.split('.').first;
+    if (domainName.length > 2) {
+      const typoTargets = [
+        'paypal', 'amazon', 'google', 'facebook', 'netflix',
+        'paytm', 'phonepe', 'flipkart', 'zomato', 'swiggy'
+      ];
+      for (final brand in typoTargets) {
+        if (domainName != brand && _levenshtein(domainName, brand) <= 2) {
+          warnings.add('⚠️ Domain looks like "$brand" (possible typosquatting)');
+          isSafe = false;
+          break;
+        }
+      }
+    }
+
+    // Check 11: Shannon entropy — high entropy path suggests randomly generated URL
+    final urlPath = Uri.tryParse(url)?.path ?? '';
+    if (urlPath.length > 20 && _shannonEntropy(urlPath) > 4.5) {
+      warnings.add('ℹ️ URL path appears randomly generated');
+    }
+
     final isActuallySafe = isSafe && warnings.isEmpty;
     return {
       'isSafe': isActuallySafe,
@@ -160,7 +241,7 @@ class _QrResultSheetState extends ConsumerState<QrResultSheet> {
     final lowerUrl = url.toLowerCase();
     final lookalikes = [
       ('paypa1.com', 'paypal.com'),
-      ('amazo n.com', 'amazon.com'),
+      ('amaz0n.com', 'amazon.com'),
       ('goggle.com', 'google.com'),
     ];
     return lookalikes.any((pair) => lowerUrl.contains(pair.$1));
@@ -210,7 +291,7 @@ class _QrResultSheetState extends ConsumerState<QrResultSheet> {
                         size: 16, color: AppColors.success),
                     SizedBox(width: 8),
                     Expanded(
-                      child: Text('No threats detected',
+                      child: Text('No issues found (local check)',
                           style:
                               TextStyle(fontSize: 12, color: AppColors.success)),
                     ),
@@ -277,8 +358,8 @@ class _QrResultSheetState extends ConsumerState<QrResultSheet> {
               Navigator.pop(ctx);
               _openUrl(context, urlStr);
             },
-            child: const Text('Open',
-                style: TextStyle(color: AppColors.primary)),
+            child: Text('Open',
+                style: TextStyle(color: Theme.of(context).colorScheme.primary)),
           ),
         ],
       ),
@@ -321,8 +402,8 @@ class _QrResultSheetState extends ConsumerState<QrResultSheet> {
               Navigator.pop(ctx);
               _checkAndSavePdf(context, urlStr);
             },
-            child: const Text('Save PDF',
-                style: TextStyle(color: AppColors.primary)),
+            child: Text('Save PDF',
+                style: TextStyle(color: Theme.of(context).colorScheme.primary)),
           ),
         ],
       ),
@@ -337,13 +418,14 @@ class _QrResultSheetState extends ConsumerState<QrResultSheet> {
     );
     if (filePath != null && mounted) {
       setState(() => _savedPdfPath = filePath);
-      final openResult = await OpenFilex.open(filePath);
-      if (openResult.type == ResultType.noAppToOpen && mounted) {
-        ScaffoldMessenger.of(this.context).showSnackBar(
-          const SnackBar(content: Text('No PDF viewer found')),
-        );
-      }
+      _openPdfExternal(filePath);
     }
+  }
+
+  // ── Open saved PDF in external app ────────────────────────────────────────
+  void _openPdfExternal(String filePath) {
+    if (!mounted) return;
+    OpenFilex.open(filePath);
   }
 
   // ── Open URL in external browser (system chooser) ───────────────────────
@@ -469,10 +551,342 @@ class _QrResultSheetState extends ConsumerState<QrResultSheet> {
     );
   }
 
+  // ── UPI helpers ──────────────────────────────────────────────────────────
+
+  Map<String, String> _parseUpi(String raw) {
+    final uri = Uri.tryParse(raw);
+    final params = uri?.queryParameters ?? {};
+    return {
+      'pa': params['pa'] ?? '',
+      'pn': params['pn'] ?? '',
+      'am': params['am'] ?? '',
+      'cu': params['cu'] ?? 'INR',
+    };
+  }
+
+  bool _isCompanyVpa(String vpa) {
+    final lower = vpa.toLowerCase();
+    const companyHandles = ['razorpay', 'paytm', 'icici', 'hdfc', 'axis', 'sbi', 'kotak', 'yesbank', 'indusind'];
+    const companyWords = ['ltd', 'pvt', 'inc', 'corp', 'store', 'shop', 'enterprises', 'merchant', 'biz'];
+    return companyHandles.any((h) => lower.contains(h)) ||
+        companyWords.any((w) => lower.contains(w));
+  }
+
+  Widget _buildUpiPreview(BuildContext context) {
+    final upi = _parseUpi(result.content);
+    final rows = <Widget>[];
+
+    void addRow(String label, String value) {
+      if (value.isEmpty) return;
+      rows.add(Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 80,
+              child: Text(label,
+                  style: AppTextStyles.caption(context)
+                      .copyWith(fontWeight: FontWeight.w600)),
+            ),
+            Expanded(
+              child: Text(value,
+                  style: AppTextStyles.body(context),
+                  overflow: TextOverflow.ellipsis),
+            ),
+          ],
+        ),
+      ));
+    }
+
+    addRow('To (VPA)', upi['pa'] ?? '');
+    addRow('Name', upi['pn'] ?? '');
+    if ((upi['am'] ?? '').isNotEmpty) addRow('Amount', '₹${upi['am']}');
+
+    final vpa = upi['pa'] ?? '';
+    if (vpa.isNotEmpty) {
+      final isCompany = _isCompanyVpa(vpa);
+      rows.add(Container(
+        margin: const EdgeInsets.only(top: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: (isCompany ? Colors.blue : Colors.orange).withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isCompany ? Icons.business_rounded : Icons.person_rounded,
+              size: 14,
+              color: isCompany ? Colors.blue : Colors.orange,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              isCompany ? 'Business payment' : 'Personal payment',
+              style: TextStyle(
+                fontSize: 12,
+                color: isCompany ? Colors.blue : Colors.orange,
+              ),
+            ),
+          ],
+        ),
+      ));
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: rows.isEmpty
+          ? [Text(result.content, style: AppTextStyles.body(context))]
+          : rows,
+    );
+  }
+
+  Future<void> _showUpiWarningDialog(BuildContext context) async {
+    if (!context.mounted) return;
+    final upi = _parseUpi(result.content);
+    final vpa = upi['pa'] ?? '';
+    final name = upi['pn'] ?? '';
+    final amount = upi['am'] ?? '';
+    final isCompany = _isCompanyVpa(vpa);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ── Red warning banner ──────────────────────────────────────
+              Container(
+                width: double.infinity,
+                color: AppColors.error,
+                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                child: const Column(
+                  children: [
+                    Icon(Icons.warning_rounded, color: Colors.white, size: 44),
+                    SizedBox(height: 10),
+                    Text(
+                      'YOU ARE SENDING MONEY',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'आप पैसे भेज रहे हैं',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Payment details ─────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Who are they paying
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppColors.bgColor(ctx),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.textSubColor(ctx).withValues(alpha: 0.15),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Entity badge (company / person)
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: isCompany
+                                      ? Colors.blue.withValues(alpha: 0.12)
+                                      : Colors.orange.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      isCompany
+                                          ? Icons.business_rounded
+                                          : Icons.person_rounded,
+                                      size: 13,
+                                      color: isCompany
+                                          ? Colors.blue
+                                          : Colors.orange,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      isCompany
+                                          ? 'Business  •  व्यवसाय'
+                                          : 'Person  •  व्यक्ति',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: isCompany
+                                            ? Colors.blue
+                                            : Colors.orange,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (vpa.isNotEmpty) ...[
+                            const SizedBox(height: 10),
+                            _UpiDetailLine(ctx, 'To / जिसे', vpa),
+                          ],
+                          if (name.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            _UpiDetailLine(ctx, 'Name / नाम', name),
+                          ],
+                          if (amount.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            _UpiDetailLine(
+                              ctx,
+                              'Amount / राशि',
+                              '₹$amount',
+                              valueStyle: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.error,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+
+                    // Scam warning tip
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                            color: Colors.amber.withValues(alpha: 0.3)),
+                      ),
+                      child: const Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.info_outline_rounded,
+                              size: 14, color: Colors.amber),
+                          SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Verify the VPA before paying. Scammers share fake QR codes asking you to "receive" money — paying always sends, never receives.',
+                              style: TextStyle(
+                                  fontSize: 11, color: Colors.amber),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
+
+              // ── Action buttons ──────────────────────────────────────────
+              Padding(
+                padding:
+                    const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: const Text('Cancel / रद्द करें'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          _launchUrl(result.content);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.error,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: const Text(
+                          'Pay Now\nअभी भेजें',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              fontSize: 13, fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _UpiDetailLine(BuildContext ctx, String label, String value,
+      {TextStyle? valueStyle}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 90,
+          child: Text(label,
+              style: AppTextStyles.caption(ctx)
+                  .copyWith(fontWeight: FontWeight.w600)),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: valueStyle ?? AppTextStyles.body(ctx),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
     final isUrl = result.type == QRType.url;
+    final isUpi = result.type == QRType.upi;
 
     return Container(
       padding: EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.lg,
@@ -504,11 +918,11 @@ class _QrResultSheetState extends ConsumerState<QrResultSheet> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: AppRadius.chipRadius,
                 ),
                 child: Icon(_typeIcon(result.type),
-                    color: AppColors.primary, size: 20),
+                    color: Theme.of(context).colorScheme.primary, size: 20),
               ),
               const Gap(AppSpacing.md),
               Expanded(
@@ -544,12 +958,14 @@ class _QrResultSheetState extends ConsumerState<QrResultSheet> {
             ),
             child: result.type == QRType.wifi
                 ? _buildWifiPreview(context)
-                : Text(
-                    result.content,
-                    style: AppTextStyles.body(context),
-                    maxLines: 5,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                : result.type == QRType.upi
+                    ? _buildUpiPreview(context)
+                    : Text(
+                        result.content,
+                        style: AppTextStyles.body(context),
+                        maxLines: 5,
+                        overflow: TextOverflow.ellipsis,
+                      ),
           ),
           const Gap(AppSpacing.lg),
           // Action buttons
@@ -628,34 +1044,40 @@ class _QrResultSheetState extends ConsumerState<QrResultSheet> {
                   onTap: () => Share.share(result.content),
                 ),
               ),
-              const Gap(AppSpacing.sm),
+              // UPI → Pay (warning dialog)
               // URL → Save PDF / Open PDF toggle
               // Other → Print (system print dialog with styled content)
-              Expanded(
-                child: _ActionButton(
-                  icon: isUrl
-                      ? (_savedPdfPath != null
-                          ? Icons.open_in_new_rounded
-                          : Icons.picture_as_pdf_rounded)
-                      : Icons.print_rounded,
-                  label: isUrl
-                      ? (_savedPdfPath != null ? 'Open PDF' : 'Save PDF')
-                      : 'Print',
-                  onTap: () {
-                    if (isUrl && _savedPdfPath != null) {
-                      OpenFilex.open(_savedPdfPath!).then((result) {
-                        if (result.type == ResultType.noAppToOpen && mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('No PDF viewer found')),
-                          );
-                        }
-                      });
-                    } else {
-                      _savePdf(context);
-                    }
-                  },
+              if (isUpi) ...[
+                const Gap(AppSpacing.sm),
+                Expanded(
+                  child: _ActionButton(
+                    icon: Iconsax.wallet_money,
+                    label: 'Pay',
+                    onTap: () => _showUpiWarningDialog(context),
+                  ),
                 ),
-              ),
+              ] else ...[
+                const Gap(AppSpacing.sm),
+                Expanded(
+                  child: _ActionButton(
+                    icon: isUrl
+                        ? (_savedPdfPath != null
+                            ? Icons.open_in_new_rounded
+                            : Icons.picture_as_pdf_rounded)
+                        : Icons.print_rounded,
+                    label: isUrl
+                        ? (_savedPdfPath != null ? 'Open PDF' : 'Save PDF')
+                        : 'Print',
+                    onTap: () {
+                      if (isUrl && _savedPdfPath != null) {
+                        _openPdfExternal(_savedPdfPath!);
+                      } else {
+                        _savePdf(context);
+                      }
+                    },
+                  ),
+                ),
+              ],
             ],
           ),
         ],
@@ -686,7 +1108,7 @@ class _ActionButton extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: AppColors.primary, size: 20),
+            Icon(icon, color: Theme.of(context).colorScheme.primary, size: 20),
             const Gap(4),
             Text(label,
                 style: TextStyle(

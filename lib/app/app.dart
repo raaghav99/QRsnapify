@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'theme.dart';
 import 'providers.dart';
 import '../features/onboarding/onboarding_screen.dart';
 import '../features/home_screen.dart';
+import '../features/settings/settings_provider.dart';
 import '../shared/services/calibration_service.dart';
 import '../shared/services/age_scale_service.dart';
 
@@ -66,6 +68,7 @@ class _QRSnapAppState extends ConsumerState<QRSnapApp> {
   Widget build(BuildContext context) {
     final textScale = ref.watch(textScaleProvider);
     final onboardingDone = ref.watch(onboardingCompleteProvider);
+    final themeSettings = ref.watch(themeSettingsProvider);
 
     if (!_initialized) {
       return const MaterialApp(
@@ -79,10 +82,19 @@ class _QRSnapAppState extends ConsumerState<QRSnapApp> {
       onPointerDown: _onPointerDown,
       child: MaterialApp(
         title: 'QRSnap',
-        theme: appTheme(),
-        darkTheme: appDarkTheme(),
+        theme: appTheme(themeSettings.effectiveColor),
+        darkTheme: appDarkTheme(themeSettings.effectiveColor),
         themeMode: ThemeMode.system,
         debugShowCheckedModeBanner: false,
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('en'),
+          Locale('hi'),
+        ],
         builder: (context, child) {
           return MediaQuery(
             data: MediaQuery.of(context).copyWith(

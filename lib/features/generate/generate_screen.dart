@@ -80,6 +80,7 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
       final file = File('${dir.path}/qrsnap_share.png');
       await file.writeAsBytes(bytes);
       await Share.shareXFiles([XFile(file.path)], text: 'QR Code from QRSnap');
+      file.delete().ignore();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -116,7 +117,8 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
                       label: Text(_typeLabel(type)),
                       selected: isSelected,
                       onSelected: (_) => controller.selectType(type),
-                      selectedColor: AppColors.primary,
+                      showCheckmark: false,
+                      selectedColor: Theme.of(context).colorScheme.primary,
                       backgroundColor: AppColors.cardColor(context),
                       labelStyle: TextStyle(
                         color: isSelected
@@ -124,7 +126,8 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
                             : Theme.of(context).colorScheme.onSurface,
                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                       ),
-                      checkmarkColor: Colors.white,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
                     ),
                   );
                 }).toList(),
@@ -168,7 +171,6 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
                       icon: Iconsax.save_2,
                       isLoading: _isSaving,
                       onPressed: state.hasContent ? _saveToGallery : null,
-                      backgroundColor: AppColors.primary,
                     ),
                   ),
                   const Gap(AppSpacing.md),
@@ -192,11 +194,11 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
                         width: 96,
                         height: 96,
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.06),
+                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.06),
                           borderRadius: BorderRadius.circular(24),
                         ),
-                        child: const Icon(Icons.qr_code_2_rounded,
-                            size: 52, color: AppColors.primary),
+                        child: Icon(Icons.qr_code_2_rounded,
+                            size: 52, color: Theme.of(context).colorScheme.primary),
                       ),
                       const Gap(AppSpacing.lg),
                       Text(
@@ -272,6 +274,19 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
           ),
           _FieldConfig(label: 'Organization (optional)', onChanged: controller.setVcardOrg),
         ]),
+      GenerateType.geo => _MultiFieldForm(fields: [
+          _FieldConfig(
+            label: 'Latitude (e.g. 28.6139)',
+            onChanged: controller.setGeoLat,
+            keyboard: TextInputType.numberWithOptions(signed: true, decimal: true),
+          ),
+          _FieldConfig(
+            label: 'Longitude (e.g. 77.2090)',
+            onChanged: controller.setGeoLng,
+            keyboard: TextInputType.numberWithOptions(signed: true, decimal: true),
+          ),
+          _FieldConfig(label: 'Label (optional)', onChanged: controller.setGeoLabel),
+        ]),
       // Simple single-field types
       _ => _SimpleField(
           hint: _hintText(state.selectedType),
@@ -292,6 +307,7 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
     GenerateType.upi => 'UPI',
     GenerateType.whatsapp => 'WhatsApp',
     GenerateType.vcard => 'Contact',
+    GenerateType.geo => 'Location',
   };
 
   String _hintText(GenerateType type) => switch (type) {
@@ -474,7 +490,7 @@ InputDecoration _inputDecoration(BuildContext context, String hint, {bool isLabe
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: AppRadius.cardRadius,
-      borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+      borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.5),
     ),
     contentPadding: const EdgeInsets.all(AppSpacing.lg),
   );

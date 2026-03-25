@@ -1,4 +1,4 @@
-enum QRType { url, email, phone, wifi, text }
+enum QRType { url, email, phone, wifi, text, upi }
 
 class ScanResult {
   final String id;
@@ -28,6 +28,8 @@ class ScanResult {
       return QRType.phone;
     } else if (lower.startsWith('wifi:')) {
       return QRType.wifi;
+    } else if (lower.startsWith('upi:')) {
+      return QRType.upi;
     }
     return QRType.text;
   }
@@ -48,13 +50,24 @@ class ScanResult {
     'isFavourite': isFavourite,
   };
 
-  factory ScanResult.fromJson(Map<String, dynamic> json) => ScanResult(
-    id: json['id'] as String,
-    content: json['content'] as String,
-    type: QRType.values.firstWhere((e) => e.name == json['type'], orElse: () => QRType.text),
-    scannedAt: DateTime.parse(json['scannedAt'] as String),
-    isFavourite: json['isFavourite'] as bool? ?? false,
-  );
+  factory ScanResult.fromJson(Map<String, dynamic> json) {
+    final content = json['content'] as String;
+    var type = QRType.values.firstWhere(
+      (e) => e.name == json['type'],
+      orElse: () => QRType.text,
+    );
+    // Retroactively upgrade entries saved as 'text' before UPI type was added
+    if (type == QRType.text && content.toLowerCase().startsWith('upi:')) {
+      type = QRType.upi;
+    }
+    return ScanResult(
+      id: json['id'] as String,
+      content: content,
+      type: type,
+      scannedAt: DateTime.parse(json['scannedAt'] as String),
+      isFavourite: json['isFavourite'] as bool? ?? false,
+    );
+  }
 
   static int _counter = 0;
 

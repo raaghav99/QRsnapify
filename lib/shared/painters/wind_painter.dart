@@ -5,8 +5,9 @@ import '../../app/theme.dart';
 class WindPainter extends CustomPainter {
   final double progress; // 0.0 – 1.0, driven by AnimationController
   final Brightness brightness;
+  final Color primaryColor;
 
-  WindPainter({required this.progress, required this.brightness});
+  WindPainter({required this.progress, required this.brightness, required this.primaryColor});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -18,7 +19,7 @@ class WindPainter extends CustomPainter {
 
     for (final layer in layers) {
       final paint = Paint()
-        ..color = AppColors.primary.withValues(alpha: layer.opacity)
+        ..color = primaryColor.withValues(alpha: layer.opacity)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.0
         ..strokeCap = StrokeCap.round;

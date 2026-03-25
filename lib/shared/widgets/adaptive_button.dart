@@ -29,7 +29,7 @@ class AdaptiveButton extends ConsumerWidget {
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: backgroundColor ?? AppColors.primary,
+          backgroundColor: backgroundColor ?? Theme.of(context).colorScheme.primary,
           minimumSize: Size(double.infinity, height),
           shape: RoundedRectangleBorder(
             borderRadius: AppRadius.buttonRadius,

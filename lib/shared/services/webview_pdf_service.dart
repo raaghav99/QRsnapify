@@ -63,8 +63,8 @@ class _WebViewPdfCapturePageState extends State<WebViewPdfCapturePage> {
     try {
       DebugLogger.log('generatePdf → ${widget.url}');
 
-      // Native side: loads URL in Android WebView, calls
-      // createPrintDocumentAdapter, writes PDF to cache, returns path
+      // Native side: loads URL in Android WebView, renders to bitmap,
+      // slices into PDF pages, returns cache path
       final tempPath = await _channel.invokeMethod<String>(
         'generatePdf',
         {'url': widget.url},
@@ -81,7 +81,7 @@ class _WebViewPdfCapturePageState extends State<WebViewPdfCapturePage> {
       final baseDir = extDir ?? await getApplicationDocumentsDirectory();
       final pdfDir = Directory('${baseDir.path}/QRSnap_PDFs');
       if (!pdfDir.existsSync()) pdfDir.createSync(recursive: true);
-      final fileName = 'QRSnap_${DateTime.now().millisecondsSinceEpoch}.pdf';
+      final fileName = _pdfFileName(widget.url);
       final savedFile = File('${pdfDir.path}/$fileName');
       await File(tempPath).copy(savedFile.path);
       // Delete the temp cache file
@@ -110,6 +110,10 @@ class _WebViewPdfCapturePageState extends State<WebViewPdfCapturePage> {
     }
   }
 
+  String _pdfFileName(String url) {
+    return 'QRSnap_${DateTime.now().millisecondsSinceEpoch}.pdf';
+  }
+
   void _abort() async {
     if (_isAborted) return;
     _isAborted = true;
@@ -120,14 +124,13 @@ class _WebViewPdfCapturePageState extends State<WebViewPdfCapturePage> {
 
   @override
   Widget build(BuildContext context) {
+    final scaffold = Scaffold(
+      backgroundColor: Colors.black.withValues(alpha: 0.01),
+      body: const SizedBox.shrink(),
+    );
     return PopScope(
       canPop: false,
-      child: DebugOverlay(
-        child: Scaffold(
-          backgroundColor: Colors.black.withValues(alpha: 0.01),
-          body: const SizedBox.shrink(),
-        ),
-      ),
+      child: kDebugOverlayEnabled ? DebugOverlay(child: scaffold) : scaffold,
     );
   }
 }
