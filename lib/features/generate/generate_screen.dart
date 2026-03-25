@@ -97,16 +97,65 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
   }
 
   Future<void> _printQr() async {
+    final state = ref.read(generateControllerProvider);
     final bytes = await _captureQr();
     if (bytes == null) return;
     final image = pw.MemoryImage(bytes);
+    final qrContent = state.qrData;
     await Printing.layoutPdf(
       onLayout: (_) async {
         final doc = pw.Document();
         doc.addPage(pw.Page(
           pageFormat: PdfPageFormat.a4,
-          build: (_) => pw.Center(
-            child: pw.Image(image, width: 200, height: 200),
+          margin: const pw.EdgeInsets.all(40),
+          build: (ctx) => pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.center,
+            children: [
+              // Heading — top left-ish but centered
+              pw.Align(
+                alignment: pw.Alignment.topCenter,
+                child: pw.Text(
+                  'QRSnap',
+                  style: pw.TextStyle(
+                    fontSize: 28,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+              ),
+              pw.Spacer(),
+              // QR — dead centre
+              pw.Center(
+                child: pw.Image(image, width: 340, height: 340),
+              ),
+              pw.SizedBox(height: 50),
+              // Data text — centred below QR
+              pw.Center(
+                child: pw.Container(
+                  padding: const pw.EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  decoration: pw.BoxDecoration(
+                    color: PdfColors.grey100,
+                    borderRadius: pw.BorderRadius.circular(8),
+                  ),
+                  child: pw.Text(
+                    qrContent,
+                    style: const pw.TextStyle(fontSize: 11),
+                    textAlign: pw.TextAlign.center,
+                    maxLines: 4,
+                    overflow: pw.TextOverflow.clip,
+                  ),
+                ),
+              ),
+              pw.Spacer(),
+              pw.Center(
+                child: pw.Text(
+                  'Generated with QRSnap',
+                  style: pw.TextStyle(
+                    fontSize: 9,
+                    color: PdfColors.grey500,
+                  ),
+                ),
+              ),
+            ],
           ),
         ));
         return doc.save();
