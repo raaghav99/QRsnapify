@@ -4,7 +4,10 @@ enum GenerateType { url, text, email, phone, sms, wifi, upi, whatsapp, vcard, ge
 
 class GenerateState {
   final GenerateType selectedType;
-  final String input;
+  final String urlInput;
+  final String textInput;
+  final String emailInput;
+  final String phoneInput;
   // WiFi fields
   final String ssid;
   final String password;
@@ -31,7 +34,10 @@ class GenerateState {
 
   const GenerateState({
     this.selectedType = GenerateType.text,
-    this.input = '',
+    this.urlInput = '',
+    this.textInput = '',
+    this.emailInput = '',
+    this.phoneInput = '',
     this.ssid = '',
     this.password = '',
     this.security = 'WPA',
@@ -53,11 +59,11 @@ class GenerateState {
 
   String get qrData {
     return switch (selectedType) {
-      GenerateType.url => input.isEmpty ? '' : input.startsWith('http') ? input : 'https://$input',
-      GenerateType.email => input.isEmpty ? '' : 'mailto:$input',
-      GenerateType.phone => input.isEmpty ? '' : 'tel:$input',
+      GenerateType.url => urlInput.isEmpty ? '' : urlInput.startsWith('http') ? urlInput : 'https://$urlInput',
+      GenerateType.email => emailInput.isEmpty ? '' : 'mailto:$emailInput',
+      GenerateType.phone => phoneInput.isEmpty ? '' : 'tel:$phoneInput',
       GenerateType.wifi => ssid.isEmpty ? '' : 'WIFI:T:$security;S:$ssid;P:$password;;',
-      GenerateType.text => input,
+      GenerateType.text => textInput,
       GenerateType.sms => smsPhone.isEmpty ? '' : 'smsto:$smsPhone:$smsBody',
       GenerateType.upi => upiVpa.isEmpty ? '' : _buildUpiString(),
       GenerateType.whatsapp => waPhone.isEmpty ? '' : 'https://wa.me/${waPhone.replaceAll(RegExp(r'[^\d]'), '')}${waMessage.isNotEmpty ? '?text=${Uri.encodeComponent(waMessage)}' : ''}',
@@ -94,7 +100,10 @@ class GenerateState {
 
   GenerateState copyWith({
     GenerateType? selectedType,
-    String? input,
+    String? urlInput,
+    String? textInput,
+    String? emailInput,
+    String? phoneInput,
     String? ssid,
     String? password,
     String? security,
@@ -114,7 +123,10 @@ class GenerateState {
     String? geoLabel,
   }) => GenerateState(
     selectedType: selectedType ?? this.selectedType,
-    input: input ?? this.input,
+    urlInput: urlInput ?? this.urlInput,
+    textInput: textInput ?? this.textInput,
+    emailInput: emailInput ?? this.emailInput,
+    phoneInput: phoneInput ?? this.phoneInput,
     ssid: ssid ?? this.ssid,
     password: password ?? this.password,
     security: security ?? this.security,
@@ -138,8 +150,11 @@ class GenerateState {
 class GenerateController extends StateNotifier<GenerateState> {
   GenerateController() : super(const GenerateState());
 
-  void selectType(GenerateType type) => state = GenerateState(selectedType: type);
-  void setInput(String value) => state = state.copyWith(input: value);
+  void selectType(GenerateType type) => state = state.copyWith(selectedType: type);
+  void setUrlInput(String value) => state = state.copyWith(urlInput: value);
+  void setTextInput(String value) => state = state.copyWith(textInput: value);
+  void setEmailInput(String value) => state = state.copyWith(emailInput: value);
+  void setPhoneInput(String value) => state = state.copyWith(phoneInput: value);
   void setSsid(String value) => state = state.copyWith(ssid: value);
   void setPassword(String value) => state = state.copyWith(password: value);
   void setSecurity(String value) => state = state.copyWith(security: value);

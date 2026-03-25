@@ -8,6 +8,9 @@ import 'package:gal/gal.dart';
 import 'package:gap/gap.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../app/theme.dart';
@@ -23,7 +26,31 @@ class GenerateScreen extends ConsumerStatefulWidget {
 
 class _GenerateScreenState extends ConsumerState<GenerateScreen> {
   final _qrKey = GlobalKey();
+  final _scrollController = ScrollController();
+  final _actionsKey = GlobalKey();
   bool _isSaving = false;
+  bool _wasShowingQr = false;
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToActions() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollController.hasClients) return;
+      final ctx = _qrKey.currentContext;
+      if (ctx != null) {
+        Scrollable.ensureVisible(
+          ctx,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+          alignment: 0.3, // keep QR in upper-third — shows input above & buttons below
+        );
+      }
+    });
+  }
 
   Future<Uint8List?> _captureQr() async {
     try {
@@ -69,6 +96,24 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
     }
   }
 
+  Future<void> _printQr() async {
+    final bytes = await _captureQr();
+    if (bytes == null) return;
+    final image = pw.MemoryImage(bytes);
+    await Printing.layoutPdf(
+      onLayout: (_) async {
+        final doc = pw.Document();
+        doc.addPage(pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          build: (_) => pw.Center(
+            child: pw.Image(image, width: 200, height: 200),
+          ),
+        ));
+        return doc.save();
+      },
+    );
+  }
+
   Future<void> _shareQr() async {
     final state = ref.read(generateControllerProvider);
     if (!state.hasContent) return;
@@ -99,9 +144,23 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
       appBar: AppBar(
         title: Text('Generate QR', style: AppTextStyles.subheading(context)),
         centerTitle: true,
+        actions: [
+          if (state.hasContent)
+            IconButton(
+              onPressed: _printQr,
+              icon: const Icon(Icons.print_rounded, size: 22),
+              tooltip: 'Print QR',
+            ),
+        ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.xl),
+        controller: _scrollController,
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.xl,
+          AppSpacing.xl,
+          AppSpacing.xl,
+          AppSpacing.xl + 64 + MediaQuery.of(context).padding.bottom,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -143,6 +202,13 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
             const Gap(AppSpacing.xl),
             // QR Preview
             if (state.hasContent) ...[
+              Builder(builder: (_) {
+                if (!_wasShowingQr) {
+                  _wasShowingQr = true;
+                  _scrollToActions();
+                }
+                return const SizedBox.shrink();
+              }),
               Center(
                 child: RepaintBoundary(
                   key: _qrKey,
@@ -164,6 +230,7 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
               ),
               const Gap(AppSpacing.xl),
               Row(
+                key: _actionsKey,
                 children: [
                   Expanded(
                     child: AdaptiveButton(
@@ -184,7 +251,11 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
                   ),
                 ],
               ),
-            ] else
+            ] else ...[
+              Builder(builder: (_) {
+                _wasShowingQr = false;
+                return const SizedBox.shrink();
+              }),
               Center(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
@@ -211,6 +282,7 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
                   ),
                 ),
               ),
+            ],
           ],
         ),
       ),
@@ -221,8 +293,8 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
       BuildContext context, GenerateState state, GenerateController controller) {
     return switch (state.selectedType) {
       GenerateType.wifi => _MultiFieldForm(fields: [
-          _FieldConfig(label: 'Network Name (SSID)', onChanged: controller.setSsid),
-          _FieldConfig(label: 'Password', onChanged: controller.setPassword, obscure: true),
+          _FieldConfig(label: 'Network Name (SSID)', onChanged: controller.setSsid, initialValue: state.ssid),
+          _FieldConfig(label: 'Password', onChanged: controller.setPassword, obscure: true, initialValue: state.password),
           _FieldConfig(
             label: 'Security',
             onChanged: controller.setSecurity,
@@ -236,16 +308,18 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
             label: 'Phone Number',
             onChanged: controller.setSmsPhone,
             keyboard: TextInputType.phone,
+            initialValue: state.smsPhone,
           ),
-          _FieldConfig(label: 'Message', onChanged: controller.setSmsBody, maxLines: 3),
+          _FieldConfig(label: 'Message', onChanged: controller.setSmsBody, maxLines: 3, initialValue: state.smsBody),
         ]),
       GenerateType.upi => _MultiFieldForm(fields: [
-          _FieldConfig(label: 'UPI ID (e.g. name@upi)', onChanged: controller.setUpiVpa),
-          _FieldConfig(label: 'Payee Name', onChanged: controller.setUpiName),
+          _FieldConfig(label: 'UPI ID (e.g. name@upi)', onChanged: controller.setUpiVpa, initialValue: state.upiVpa),
+          _FieldConfig(label: 'Payee Name', onChanged: controller.setUpiName, initialValue: state.upiName),
           _FieldConfig(
             label: 'Amount (optional)',
             onChanged: controller.setUpiAmount,
             keyboard: TextInputType.number,
+            initialValue: state.upiAmount,
           ),
         ]),
       GenerateType.whatsapp => _MultiFieldForm(fields: [
@@ -253,46 +327,73 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
             label: 'Phone Number (with country code)',
             onChanged: controller.setWaPhone,
             keyboard: TextInputType.phone,
+            initialValue: state.waPhone,
           ),
           _FieldConfig(
             label: 'Pre-filled Message (optional)',
             onChanged: controller.setWaMessage,
             maxLines: 3,
+            initialValue: state.waMessage,
           ),
         ]),
       GenerateType.vcard => _MultiFieldForm(fields: [
-          _FieldConfig(label: 'Full Name', onChanged: controller.setVcardName),
+          _FieldConfig(label: 'Full Name', onChanged: controller.setVcardName, initialValue: state.vcardName),
           _FieldConfig(
             label: 'Phone',
             onChanged: controller.setVcardPhone,
             keyboard: TextInputType.phone,
+            initialValue: state.vcardPhone,
           ),
           _FieldConfig(
             label: 'Email',
             onChanged: controller.setVcardEmail,
             keyboard: TextInputType.emailAddress,
+            initialValue: state.vcardEmail,
           ),
-          _FieldConfig(label: 'Organization (optional)', onChanged: controller.setVcardOrg),
+          _FieldConfig(label: 'Organization (optional)', onChanged: controller.setVcardOrg, initialValue: state.vcardOrg),
         ]),
       GenerateType.geo => _MultiFieldForm(fields: [
           _FieldConfig(
             label: 'Latitude (e.g. 28.6139)',
             onChanged: controller.setGeoLat,
             keyboard: TextInputType.numberWithOptions(signed: true, decimal: true),
+            initialValue: state.geoLat,
           ),
           _FieldConfig(
             label: 'Longitude (e.g. 77.2090)',
             onChanged: controller.setGeoLng,
             keyboard: TextInputType.numberWithOptions(signed: true, decimal: true),
+            initialValue: state.geoLng,
           ),
-          _FieldConfig(label: 'Label (optional)', onChanged: controller.setGeoLabel),
+          _FieldConfig(label: 'Label (optional)', onChanged: controller.setGeoLabel, initialValue: state.geoLabel),
         ]),
-      // Simple single-field types
-      _ => _SimpleField(
-          hint: _hintText(state.selectedType),
-          onChanged: controller.setInput,
-          keyboard: _keyboardType(state.selectedType),
-          maxLines: state.selectedType == GenerateType.text ? 4 : 1,
+      GenerateType.url => _SimpleField(
+          hint: 'https://example.com',
+          onChanged: controller.setUrlInput,
+          keyboard: TextInputType.url,
+          maxLines: 1,
+          initialValue: state.urlInput,
+        ),
+      GenerateType.text => _SimpleField(
+          hint: 'Enter your text here...',
+          onChanged: controller.setTextInput,
+          keyboard: TextInputType.text,
+          maxLines: 4,
+          initialValue: state.textInput,
+        ),
+      GenerateType.email => _SimpleField(
+          hint: 'email@example.com',
+          onChanged: controller.setEmailInput,
+          keyboard: TextInputType.emailAddress,
+          maxLines: 1,
+          initialValue: state.emailInput,
+        ),
+      GenerateType.phone => _SimpleField(
+          hint: '+1 234 567 8900',
+          onChanged: controller.setPhoneInput,
+          keyboard: TextInputType.phone,
+          maxLines: 1,
+          initialValue: state.phoneInput,
         ),
     };
   }
@@ -326,6 +427,66 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
   };
 }
 
+// ── QR action button (icon + label, no overflow) ─────────────────────────────
+
+class _QrActionBtn extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+  final Color color;
+  final bool isLoading;
+
+  const _QrActionBtn({
+    required this.icon,
+    required this.label,
+    required this.color,
+    this.onTap,
+    this.isLoading = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onTap != null && !isLoading;
+    return GestureDetector(
+      onTap: enabled ? onTap : null,
+      child: Opacity(
+        opacity: enabled ? 1.0 : 0.4,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: isLoading
+                  ? Center(
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(color: color, strokeWidth: 2),
+                      ),
+                    )
+                  : Icon(icon, color: color, size: 22),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 // ── Field config for multi-field forms ────────────────────────────────────────
 
 class _FieldConfig {
@@ -337,6 +498,7 @@ class _FieldConfig {
   final bool isDropdown;
   final List<String>? dropdownItems;
   final String? dropdownValue;
+  final String initialValue;
 
   const _FieldConfig({
     required this.label,
@@ -347,6 +509,7 @@ class _FieldConfig {
     this.isDropdown = false,
     this.dropdownItems,
     this.dropdownValue,
+    this.initialValue = '',
   });
 }
 
@@ -357,12 +520,14 @@ class _SimpleField extends StatefulWidget {
   final ValueChanged<String> onChanged;
   final TextInputType keyboard;
   final int maxLines;
+  final String initialValue;
 
   const _SimpleField({
     required this.hint,
     required this.onChanged,
     required this.keyboard,
     required this.maxLines,
+    this.initialValue = '',
   });
 
   @override
@@ -370,7 +535,13 @@ class _SimpleField extends StatefulWidget {
 }
 
 class _SimpleFieldState extends State<_SimpleField> {
-  final _controller = TextEditingController();
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialValue);
+  }
 
   @override
   void dispose() {
@@ -408,7 +579,10 @@ class _MultiFieldFormState extends State<_MultiFieldForm> {
   @override
   void initState() {
     super.initState();
-    _controllers = List.generate(widget.fields.length, (_) => TextEditingController());
+    _controllers = List.generate(
+      widget.fields.length,
+      (i) => TextEditingController(text: widget.fields[i].initialValue),
+    );
     for (var i = 0; i < widget.fields.length; i++) {
       if (widget.fields[i].obscure) _obscured[i] = true;
     }

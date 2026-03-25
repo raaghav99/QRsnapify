@@ -182,107 +182,28 @@ class MainActivity : FlutterActivity() {
 
                                                 // Generate PDF on background thread
                                                 val outputFile = File(cacheDir, "qrsnap_${System.currentTimeMillis()}.pdf")
-                                                val a4W = 595
-                                                val a4H = 842
-                                                val scale = a4W.toFloat() / contentWidth.toFloat()
-                                                val totalPdfH = (cappedHeight * scale).toInt()
+                                                val pdfW = 595 // A4 width in pts
+                                                val scale = pdfW.toFloat() / contentWidth.toFloat()
+                                                val pdfH = (cappedHeight * scale).toInt()
 
                                                 Thread {
                                                     try {
                                                         val pdfDoc = PdfDocument()
                                                         val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
-                                                        var pageNum = 1
 
-                                                        // Pre-compute smart break points in bitmap coordinates.
-                                                        // For each page boundary, scan nearby rows to find
-                                                        // the "emptiest" row (most uniform color = gap between content).
-                                                        val idealSliceH = (a4H / scale).toInt() // one A4 page in bitmap px
-                                                        val searchZone = (idealSliceH * 0.12).toInt() // look ±12% around boundary
-                                                        val breakPoints = mutableListOf(0) // first page starts at 0
-                                                        var bmpY = 0
-                                                        while (bmpY + idealSliceH < cappedHeight) {
-                                                            val idealBreak = bmpY + idealSliceH
-                                                            val scanFrom = maxOf(bmpY + idealSliceH - searchZone, bmpY + 1)
-                                                            val scanTo = minOf(idealBreak + searchZone, cappedHeight - 1)
-                                                            var bestRow = idealBreak.coerceAtMost(cappedHeight - 1)
-                                                            var bestScore = Long.MAX_VALUE
-
-                                                            // Sample every 2nd pixel for speed; score = variance of color across row
-                                                            val rowPixels = IntArray(contentWidth)
-                                                            for (row in scanFrom..scanTo) {
-                                                                bitmap.getPixels(rowPixels, 0, contentWidth, 0, row, contentWidth, 1)
-                                                                // Score: sum of abs differences between adjacent pixels.
-                                                                // A uniform row (solid bg) scores ~0; a row with content scores high.
-                                                                var score = 0L
-                                                                var prev = rowPixels[0]
-                                                                for (x in 2 until contentWidth step 2) {
-                                                                    val px = rowPixels[x]
-                                                                    val dr = ((px shr 16) and 0xFF) - ((prev shr 16) and 0xFF)
-                                                                    val dg = ((px shr 8) and 0xFF) - ((prev shr 8) and 0xFF)
-                                                                    val db = (px and 0xFF) - (prev and 0xFF)
-                                                                    score += (dr * dr + dg * dg + db * db).toLong()
-                                                                    prev = px
-                                                                }
-                                                                if (score < bestScore) {
-                                                                    bestScore = score
-                                                                    bestRow = row
-                                                                }
-                                                            }
-                                                            breakPoints.add(bestRow)
-                                                            bmpY = bestRow
-                                                        }
-                                                        breakPoints.add(cappedHeight) // sentinel: end of content
-                                                        Log.d(TAG, "Smart breaks: ${breakPoints.size - 1} pages, breaks=$breakPoints")
-
-                                                        // Clone exact edge pixel row 1pt at each break boundary
-                                                        val blendPt = 1 // PDF points of cloned-edge padding
-
-                                                        for (i in 0 until breakPoints.size - 1) {
-                                                            val srcY = breakPoints[i]
-                                                            val srcBottom = breakPoints[i + 1]
-                                                            val srcH = srcBottom - srcY
-                                                            if (srcH <= 0) continue
-
-                                                            val isFirst = i == 0
-                                                            val isLast = i == breakPoints.size - 2
-                                                            val topBlend = if (isFirst) 0 else blendPt
-                                                            val botBlend = if (isLast) 0 else blendPt
-                                                            val contentH = (srcH * scale).toInt().coerceIn(1, a4H)
-                                                            val pageH = contentH + topBlend + botBlend
-                                                            val pageInfo = PdfDocument.PageInfo.Builder(a4W, pageH, pageNum).create()
-                                                            val page = pdfDoc.startPage(pageInfo)
-
-                                                            if (topBlend > 0) {
-                                                                val rowBmp = Bitmap.createBitmap(bitmap, 0, srcY, contentWidth, 1)
-                                                                for (r in 0 until topBlend) {
-                                                                    val d = RectF(0f, r.toFloat(), a4W.toFloat(), (r + 1).toFloat())
-                                                                    page.canvas.drawBitmap(rowBmp, null, d, paint)
-                                                                }
-                                                                rowBmp.recycle()
-                                                            }
-
-                                                            val src = Rect(0, srcY, contentWidth, srcBottom)
-                                                            val dst = RectF(0f, topBlend.toFloat(), a4W.toFloat(), (topBlend + contentH).toFloat())
-                                                            page.canvas.drawBitmap(bitmap, src, dst, paint)
-
-                                                            if (botBlend > 0) {
-                                                                val rowBmp = Bitmap.createBitmap(bitmap, 0, (srcBottom - 1).coerceAtMost(cappedHeight - 1), contentWidth, 1)
-                                                                for (r in 0 until botBlend) {
-                                                                    val y = topBlend + contentH + r
-                                                                    val d = RectF(0f, y.toFloat(), a4W.toFloat(), (y + 1).toFloat())
-                                                                    page.canvas.drawBitmap(rowBmp, null, d, paint)
-                                                                }
-                                                                rowBmp.recycle()
-                                                            }
-
-                                                            pdfDoc.finishPage(page)
-                                                            pageNum++
-                                                        }
+                                                        // Single page — full content height, no page breaks
+                                                        val pageInfo = PdfDocument.PageInfo.Builder(pdfW, pdfH, 1).create()
+                                                        val page = pdfDoc.startPage(pageInfo)
+                                                        val src = Rect(0, 0, contentWidth, cappedHeight)
+                                                        val dst = RectF(0f, 0f, pdfW.toFloat(), pdfH.toFloat())
+                                                        page.canvas.drawBitmap(bitmap, src, dst, paint)
+                                                        pdfDoc.finishPage(page)
+                                                        Log.d(TAG, "Single page PDF: ${pdfW}x${pdfH} pts")
 
                                                         FileOutputStream(outputFile).use { pdfDoc.writeTo(it) }
                                                         pdfDoc.close()
                                                         bitmap.recycle()
-                                                        Log.d(TAG, "PDF done: $pageNum pages")
+                                                        Log.d(TAG, "PDF done: single page")
 
                                                         Handler(Looper.getMainLooper()).post {
                                                             if (!resultSent) {
