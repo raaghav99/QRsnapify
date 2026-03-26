@@ -2,6 +2,8 @@
 
 A fast, beautiful QR code scanner and generator for Android. No ads. No tracking. Forever free.
 
+> This is a private repository. Do not share or redistribute the source code.
+
 ## Features
 
 - **Instant Scan** — Point your camera and scan any QR code instantly
@@ -74,8 +76,4 @@ lib/
 
 ## License
 
-MIT
-
----
-
-Built by [@raaghav99](https://github.com/raaghav99)
+Proprietary. All rights reserved.
