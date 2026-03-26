@@ -77,7 +77,7 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
       final dir = await getTemporaryDirectory();
       tempFile = File('${dir.path}/qrsnap_save.png');
       await tempFile.writeAsBytes(bytes);
-      await Gal.putImage(tempFile.path, album: 'QRSnap');
+      await Gal.putImage(tempFile.path, album: 'QRSnapify');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -115,7 +115,7 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
               pw.Align(
                 alignment: pw.Alignment.topCenter,
                 child: pw.Text(
-                  'QRSnap',
+                  'QRSnapify',
                   style: pw.TextStyle(
                     fontSize: 28,
                     fontWeight: pw.FontWeight.bold,
@@ -148,7 +148,7 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
               pw.Spacer(),
               pw.Center(
                 child: pw.Text(
-                  'Generated with QRSnap',
+                  'Generated with QRSnapify',
                   style: pw.TextStyle(
                     fontSize: 9,
                     color: PdfColors.grey500,
@@ -173,7 +173,7 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
       final dir = await getTemporaryDirectory();
       final file = File('${dir.path}/qrsnap_share.png');
       await file.writeAsBytes(bytes);
-      await Share.shareXFiles([XFile(file.path)], text: 'QR Code from QRSnap');
+      await Share.shareXFiles([XFile(file.path)], text: 'QR Code from QRSnapify');
       file.delete().ignore();
     } catch (e) {
       if (mounted) {

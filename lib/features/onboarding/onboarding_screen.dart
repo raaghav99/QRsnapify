@@ -111,7 +111,7 @@ class _WelcomePage extends StatelessWidget {
             child: const Icon(Icons.qr_code_2_rounded, size: 56, color: Colors.white),
           ).animate().scale(duration: 400.ms, curve: Curves.elasticOut),
           const Gap(AppSpacing.xxl),
-          Text('QRSnap', style: AppTextStyles.heading(context).copyWith(fontSize: 32))
+          Text('QRSnapify', style: AppTextStyles.heading(context).copyWith(fontSize: 32))
               .animate().fadeIn(delay: 200.ms),
           const Gap(AppSpacing.md),
           Text(
@@ -154,7 +154,7 @@ class _AgePage extends ConsumerWidget {
           Text('How old are you?', style: AppTextStyles.heading(context)),
           const Gap(AppSpacing.md),
           Text(
-            "We'll make QRSnap comfortable for your eyes.",
+            "We'll make QRSnapify comfortable for your eyes.",
             style: AppTextStyles.body(context).copyWith(color: AppColors.textSecondary),
             textAlign: TextAlign.center,
           ),

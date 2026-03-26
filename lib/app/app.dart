@@ -81,7 +81,7 @@ class _QRSnapAppState extends ConsumerState<QRSnapApp> {
     return Listener(
       onPointerDown: _onPointerDown,
       child: MaterialApp(
-        title: 'QRSnap',
+        title: 'QRSnapify',
         theme: appTheme(themeSettings.effectiveColor),
         darkTheme: appDarkTheme(themeSettings.effectiveColor),
         themeMode: ThemeMode.system,

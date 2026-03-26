@@ -32,7 +32,7 @@
     </queries>
 
     <application
-        android:label="QRSnap"
+        android:label="QRSnapify"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

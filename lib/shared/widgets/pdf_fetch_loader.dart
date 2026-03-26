@@ -159,7 +159,7 @@ class _PdfFetchLoaderDialogState extends State<_PdfFetchLoaderDialog>
       _progress = result == PdfFetchResult.success ? 1.0 : _progress;
       _isFadingOut = false;
       _resultMessage = switch (result) {
-        PdfFetchResult.success => 'PDF saved to QRSnap_PDFs folder',
+        PdfFetchResult.success => 'PDF saved to QRSnapify_PDFs folder',
         PdfFetchResult.timeout =>
           'Something went wrong. The site might be down.',
         PdfFetchResult.networkError =>

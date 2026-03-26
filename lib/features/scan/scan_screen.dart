@@ -524,7 +524,7 @@ class _PermissionView extends StatelessWidget {
                   style: AppTextStyles.subheading(context)),
               const SizedBox(height: AppSpacing.md),
               Text(
-                'QRSnap needs camera access to scan QR codes.',
+                'QRSnapify needs camera access to scan QR codes.',
                 style: AppTextStyles.body(context)
                     .copyWith(color: AppColors.textSubColor(context)),
                 textAlign: TextAlign.center,

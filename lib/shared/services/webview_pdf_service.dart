@@ -79,7 +79,7 @@ class _WebViewPdfCapturePageState extends State<WebViewPdfCapturePage> {
       PdfFetchLoader.updateProgress(0.90, stage: 'Saving');
       final extDir = await getExternalStorageDirectory();
       final baseDir = extDir ?? await getApplicationDocumentsDirectory();
-      final pdfDir = Directory('${baseDir.path}/QRSnap_PDFs');
+      final pdfDir = Directory('${baseDir.path}/QRSnapify_PDFs');
       if (!pdfDir.existsSync()) pdfDir.createSync(recursive: true);
       if (!pdfDir.existsSync()) pdfDir.createSync(recursive: true);
       final fileName = _pdfFileName(widget.url);
@@ -112,7 +112,7 @@ class _WebViewPdfCapturePageState extends State<WebViewPdfCapturePage> {
   }
 
   String _pdfFileName(String url) {
-    return 'QRSnap_${DateTime.now().millisecondsSinceEpoch}.pdf';
+    return 'QRSnapify_${DateTime.now().millisecondsSinceEpoch}.pdf';
   }
 
 

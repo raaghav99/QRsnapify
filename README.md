@@ -1,4 +1,4 @@
-# QRSnap
+# QRSnapify
 
 A fast, beautiful QR code scanner and generator for Android. No ads. No tracking. Forever free.
 
