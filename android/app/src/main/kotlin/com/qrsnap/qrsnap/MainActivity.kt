@@ -256,7 +256,7 @@ class MainActivity : FlutterActivity() {
             // V1: Only allow http/https schemes
             if (!url.startsWith("http://") && !url.startsWith("https://")) {
                 sendError("INVALID_URL", "Only http/https URLs allowed")
-                return
+                return@post
             }
             webView.loadUrl(url)
         }

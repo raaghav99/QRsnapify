@@ -75,11 +75,12 @@ class _WebViewPdfCapturePageState extends State<WebViewPdfCapturePage> {
 
       if (tempPath == null || !mounted || _isAborted) return;
 
-      // Copy from Android cache to external app storage (visible in Files app)
+      // Copy from Android cache to app's external storage (no permission needed, persists)
       PdfFetchLoader.updateProgress(0.90, stage: 'Saving');
       final extDir = await getExternalStorageDirectory();
       final baseDir = extDir ?? await getApplicationDocumentsDirectory();
       final pdfDir = Directory('${baseDir.path}/QRSnap_PDFs');
+      if (!pdfDir.existsSync()) pdfDir.createSync(recursive: true);
       if (!pdfDir.existsSync()) pdfDir.createSync(recursive: true);
       final fileName = _pdfFileName(widget.url);
       final savedFile = File('${pdfDir.path}/$fileName');
@@ -113,6 +114,7 @@ class _WebViewPdfCapturePageState extends State<WebViewPdfCapturePage> {
   String _pdfFileName(String url) {
     return 'QRSnap_${DateTime.now().millisecondsSinceEpoch}.pdf';
   }
+
 
   void _abort() async {
     if (_isAborted) return;

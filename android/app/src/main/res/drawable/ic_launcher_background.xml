@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Soft gradient background: deep blue to gentle purple -->
+    <group>
+        <path
+            android:fillColor="#3450F0"
+            android:pathData="M0,0h108v108H0z" />
+        <!-- Gradient overlay: lighter purple-blue at top-right -->
+        <path
+            android:fillColor="#5570FF"
+            android:fillAlpha="0.6"
+            android:pathData="M108,0 L108,108 L40,108 Q0,60 50,0 Z" />
+        <path
+            android:fillColor="#7B7AFF"
+            android:fillAlpha="0.3"
+            android:pathData="M108,0 L108,70 Q80,108 30,108 L108,108 Z" />
+    </group>
+</vector>

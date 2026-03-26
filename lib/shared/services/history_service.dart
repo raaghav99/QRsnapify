@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/scan_result.dart';
 
@@ -35,12 +36,21 @@ class HistoryService {
   Future<void> deleteById(String id) async {
     final prefs = await _p;
     final raw = prefs.getStringList(_key) ?? [];
+    // Clean up associated PDFs before removing entries
+    for (final e in raw) {
+      try {
+        final map = jsonDecode(e) as Map<String, dynamic>;
+        if (map['id'] == id) {
+          _deletePdfForContent(prefs, map['content'] as String?);
+        }
+      } catch (_) {}
+    }
     raw.removeWhere((e) {
       try {
         final map = jsonDecode(e) as Map<String, dynamic>;
         return map['id'] == id;
       } catch (_) {
-        return true; // Remove corrupted entries
+        return true;
       }
     });
     await prefs.setStringList(_key, raw);
@@ -51,12 +61,21 @@ class HistoryService {
     if (ids.isEmpty) return;
     final prefs = await _p;
     final raw = prefs.getStringList(_key) ?? [];
+    // Clean up associated PDFs before removing entries
+    for (final e in raw) {
+      try {
+        final map = jsonDecode(e) as Map<String, dynamic>;
+        if (ids.contains(map['id'])) {
+          _deletePdfForContent(prefs, map['content'] as String?);
+        }
+      } catch (_) {}
+    }
     raw.removeWhere((e) {
       try {
         final map = jsonDecode(e) as Map<String, dynamic>;
         return ids.contains(map['id']);
       } catch (_) {
-        return true; // Remove corrupted entries
+        return true;
       }
     });
     await prefs.setStringList(_key, raw);
@@ -82,6 +101,28 @@ class HistoryService {
 
   Future<void> clearAll() async {
     final prefs = await _p;
+    // Delete all associated PDFs
+    final raw = prefs.getStringList(_key) ?? [];
+    for (final e in raw) {
+      try {
+        final map = jsonDecode(e) as Map<String, dynamic>;
+        _deletePdfForContent(prefs, map['content'] as String?);
+      } catch (_) {}
+    }
     await prefs.remove(_key);
+  }
+
+  /// Deletes the saved PDF file and its SharedPreferences entry for a given content string.
+  void _deletePdfForContent(SharedPreferences prefs, String? content) {
+    if (content == null) return;
+    final key = 'pdf_path_${content.hashCode}';
+    final path = prefs.getString(key);
+    if (path != null) {
+      try {
+        final file = File(path);
+        if (file.existsSync()) file.deleteSync();
+      } catch (_) {}
+      prefs.remove(key);
+    }
   }
 }

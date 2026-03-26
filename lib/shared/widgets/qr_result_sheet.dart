@@ -1,13 +1,16 @@
+import 'dart:io';
 import 'dart:math' show log;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:open_filex/open_filex.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/scan_result.dart';
@@ -29,6 +32,31 @@ class _QrResultSheetState extends ConsumerState<QrResultSheet> {
   String? _savedPdfPath;
 
   ScanResult get result => widget.result;
+
+  static String _pdfPrefsKey(String content) => 'pdf_path_${content.hashCode}';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedPdfPath();
+  }
+
+  Future<void> _loadSavedPdfPath() async {
+    if (result.type != QRType.url) return;
+    final prefs = await SharedPreferences.getInstance();
+    final path = prefs.getString(_pdfPrefsKey(result.content));
+    if (path != null && File(path).existsSync()) {
+      if (mounted) setState(() => _savedPdfPath = path);
+    } else if (path != null) {
+      // File was deleted — clean up stale entry
+      prefs.remove(_pdfPrefsKey(result.content));
+    }
+  }
+
+  Future<void> _persistPdfPath(String path) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_pdfPrefsKey(result.content), path);
+  }
   bool get autoSaved => widget.autoSaved;
 
   IconData _typeIcon(QRType type) => switch (type) {
@@ -178,7 +206,6 @@ class _QrResultSheetState extends ConsumerState<QrResultSheet> {
     }
 
     // Check 9: Brand name appearing in subdomain (e.g. paypal.com.evil.xyz)
-    final host = Uri.tryParse(url)?.host ?? '';
     final hostParts = host.split('.');
     if (hostParts.length > 2) {
       final registrable = hostParts.sublist(hostParts.length - 2).join('.');
@@ -419,6 +446,7 @@ class _QrResultSheetState extends ConsumerState<QrResultSheet> {
     );
     if (filePath != null && mounted) {
       setState(() => _savedPdfPath = filePath);
+      _persistPdfPath(filePath);
       _openPdfExternal(filePath);
     }
   }
