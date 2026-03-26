@@ -62,6 +62,8 @@ class MainActivity : FlutterActivity() {
                 domStorageEnabled = true
                 loadWithOverviewMode = true
                 useWideViewPort = true
+                allowFileAccess = false
+                allowContentAccess = false
             }
             webView.setLayerType(View.LAYER_TYPE_SOFTWARE, null)
 
@@ -175,7 +177,7 @@ class MainActivity : FlutterActivity() {
                                         Handler(Looper.getMainLooper()).postDelayed({
                                             if (resultSent) return@postDelayed
                                             try {
-                                                val bitmap = Bitmap.createBitmap(contentWidth, cappedHeight, Bitmap.Config.ARGB_8888)
+                                                val bitmap = Bitmap.createBitmap(contentWidth, cappedHeight, Bitmap.Config.RGB_565)
                                                 view.draw(Canvas(bitmap))
                                                 Log.d(TAG, "Bitmap captured")
                                                 cleanup()
@@ -250,6 +252,11 @@ class MainActivity : FlutterActivity() {
                 }
             }
 
+            // V1: Only allow http/https schemes
+            if (!url.startsWith("http://") && !url.startsWith("https://")) {
+                sendError("INVALID_URL", "Only http/https URLs allowed")
+                return
+            }
             webView.loadUrl(url)
         }
     }

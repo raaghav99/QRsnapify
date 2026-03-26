@@ -12,8 +12,6 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  int? _expandedDay;
-
   static const _dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   // Opens the color wheel dialog; returns selected color or null if cancelled
@@ -149,7 +147,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   value: settings.weeklyColorsEnabled,
                   onChanged: (_) {
                     notifier.toggleWeeklyColors();
-                    setState(() => _expandedDay = null);
                   },
                   activeColor: primary,
                 ),

@@ -67,9 +67,11 @@ class _QrResultSheetState extends ConsumerState<QrResultSheet> {
   }
 
   // ── Launch phone/email actions ───────────────────────────────────────────
+  static const _allowedSchemes = {'http', 'https', 'tel', 'mailto', 'sms', 'upi', 'geo'};
+
   Future<void> _launchUrl(String url) async {
     final uri = Uri.tryParse(url);
-    if (uri == null) return;
+    if (uri == null || !_allowedSchemes.contains(uri.scheme)) return;
     try {
       await launchUrl(uri);
     } catch (_) {

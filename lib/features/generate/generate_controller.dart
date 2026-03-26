@@ -75,7 +75,7 @@ class GenerateState {
   }
 
   String _buildUpiString() {
-    final params = <String>['pa=$upiVpa'];
+    final params = <String>['pa=${Uri.encodeComponent(upiVpa)}'];
     if (upiName.isNotEmpty) params.add('pn=${Uri.encodeComponent(upiName)}');
     if (upiAmount.isNotEmpty) params.add('am=$upiAmount');
     params.add('cu=INR');

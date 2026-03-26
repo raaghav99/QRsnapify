@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../../app/theme.dart';
 
 class WindPainter extends CustomPainter {
   final double progress; // 0.0 – 1.0, driven by AnimationController

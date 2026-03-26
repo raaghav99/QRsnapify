@@ -4,25 +4,21 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 
 class ScanState {
   final bool isTorchOn;
-  final bool isProcessing;
   final String? lastCode;
   final bool isCameraReady;
 
   const ScanState({
     this.isTorchOn = false,
-    this.isProcessing = false,
     this.lastCode,
     this.isCameraReady = false,
   });
 
   ScanState copyWith({
     bool? isTorchOn,
-    bool? isProcessing,
     String? lastCode,
     bool? isCameraReady,
   }) => ScanState(
     isTorchOn: isTorchOn ?? this.isTorchOn,
-    isProcessing: isProcessing ?? this.isProcessing,
     lastCode: lastCode ?? this.lastCode,
     isCameraReady: isCameraReady ?? this.isCameraReady,
   );
@@ -89,7 +85,6 @@ class ScanController extends StateNotifier<ScanState> {
     return true;
   }
 
-  void setProcessing(bool value) => state = state.copyWith(isProcessing: value);
 }
 
 // No autoDispose — camera controller must persist through tab switches
