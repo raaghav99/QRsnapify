@@ -34,7 +34,11 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    ref.read(scanControllerProvider.notifier).disposeCamera();
+    // Stop camera directly — avoid ref.read in dispose as provider scope may be torn down
+    try {
+      ref.read(scanControllerProvider.notifier).cameraController?.stop();
+      ref.read(scanControllerProvider.notifier).cameraController?.dispose();
+    } catch (_) {}
     super.dispose();
   }
 

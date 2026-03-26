@@ -22,6 +22,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   final Set<String> _selectedIds = {};
   bool _selectMode = false;
   bool _showFavouritesOnly = false;
+  bool _hasAnimated = false;
 
   void _enterSelectMode(String id) {
     setState(() {
@@ -224,11 +225,14 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                       itemBuilder: (context, index) {
                         final item = filtered[index];
                         final isSelected = _selectedIds.contains(item.id);
+                        final shouldAnimate = !_hasAnimated;
+                        if (index == filtered.length - 1) _hasAnimated = true;
                         return _HistoryItem(
                           item: item,
                           index: index,
                           selectMode: _selectMode,
                           isSelected: isSelected,
+                          animate: shouldAnimate,
                           onDelete: () => controller.delete(item.id),
                           onToggleFavourite: () =>
                               controller.toggleFavourite(item.id),
@@ -313,6 +317,7 @@ class _HistoryItem extends StatelessWidget {
   final int index;
   final bool selectMode;
   final bool isSelected;
+  final bool animate;
   final VoidCallback onDelete;
   final VoidCallback onToggleFavourite;
   final VoidCallback onTap;
@@ -323,6 +328,7 @@ class _HistoryItem extends StatelessWidget {
     required this.index,
     required this.selectMode,
     required this.isSelected,
+    this.animate = true,
     required this.onDelete,
     required this.onToggleFavourite,
     required this.onTap,
@@ -439,13 +445,15 @@ class _HistoryItem extends StatelessWidget {
 
     // Swipe-to-delete only works in normal mode
     if (selectMode) {
-      return card
-          .animate(delay: Duration(milliseconds: math.min(50 * index, 300)))
-          .fadeIn(duration: 250.ms)
-          .slideX(begin: 0.1, duration: 250.ms);
+      final widget = card;
+      return animate
+          ? widget.animate(delay: Duration(milliseconds: math.min(50 * index, 300)))
+              .fadeIn(duration: 250.ms)
+              .slideX(begin: 0.1, duration: 250.ms)
+          : widget;
     }
 
-    return Dismissible(
+    final dismissible = Dismissible(
       key: Key(item.id),
       direction: DismissDirection.endToStart,
       background: Container(
@@ -459,10 +467,12 @@ class _HistoryItem extends StatelessWidget {
       ),
       onDismissed: (_) => onDelete(),
       child: card,
-    )
-        .animate(delay: Duration(milliseconds: math.min(50 * index, 300)))
-        .fadeIn(duration: 250.ms)
-        .slideX(begin: 0.1, duration: 250.ms);
+    );
+    return animate
+        ? dismissible.animate(delay: Duration(milliseconds: math.min(50 * index, 300)))
+            .fadeIn(duration: 250.ms)
+            .slideX(begin: 0.1, duration: 250.ms)
+        : dismissible;
   }
 }
 

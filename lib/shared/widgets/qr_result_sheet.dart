@@ -134,17 +134,16 @@ class _QrResultSheetState extends ConsumerState<QrResultSheet> {
       warnings.add('⚠️ Shortened URL (can hide true destination)');
     }
 
-    // Check 3: Suspicious TLDs
-    if (lowerUrl.endsWith('.tk') || lowerUrl.endsWith('.ml') ||
-        lowerUrl.endsWith('.ga') || lowerUrl.endsWith('.cf')) {
+    // Check 3: Suspicious TLDs (parse host to avoid matching paths)
+    final host = Uri.tryParse(url)?.host.toLowerCase() ?? '';
+    if (host.endsWith('.tk') || host.endsWith('.ml') ||
+        host.endsWith('.ga') || host.endsWith('.cf')) {
       warnings.add('⚠️ Uncommon domain extension');
     }
 
-    // Check 4: Very new domains (< 1 month old, heuristic)
-    if (!lowerUrl.contains('www.') && lowerUrl.split('.').length == 2) {
-      // Simple domain without subdomain might be new
-      final domain = lowerUrl.split('://').last.split('/').first;
-      if (!_isKnownDomain(domain)) {
+    // Check 4: Very new domains (heuristic — simple domain without subdomain)
+    if (host.isNotEmpty && !host.startsWith('www.') && host.split('.').length == 2) {
+      if (!_isKnownDomain(host)) {
         warnings.add('ℹ️ New or less common domain');
       }
     }

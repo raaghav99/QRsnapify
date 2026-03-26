@@ -29,7 +29,7 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
   final _scrollController = ScrollController();
   final _actionsKey = GlobalKey();
   bool _isSaving = false;
-  bool _wasShowingQr = false;
+  bool _prevHadContent = false;
 
   @override
   void dispose() {
@@ -189,6 +189,14 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
     final state = ref.watch(generateControllerProvider);
     final controller = ref.read(generateControllerProvider.notifier);
 
+    // Auto-scroll once when QR first appears (not on every rebuild)
+    if (state.hasContent && !_prevHadContent) {
+      _prevHadContent = true;
+      _scrollToActions();
+    } else if (!state.hasContent) {
+      _prevHadContent = false;
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Generate QR', style: AppTextStyles.subheading(context)),
@@ -251,13 +259,6 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
             const Gap(AppSpacing.xl),
             // QR Preview
             if (state.hasContent) ...[
-              Builder(builder: (_) {
-                if (!_wasShowingQr) {
-                  _wasShowingQr = true;
-                  _scrollToActions();
-                }
-                return const SizedBox.shrink();
-              }),
               Center(
                 child: RepaintBoundary(
                   key: _qrKey,
@@ -301,10 +302,6 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
                 ],
               ),
             ] else ...[
-              Builder(builder: (_) {
-                _wasShowingQr = false;
-                return const SizedBox.shrink();
-              }),
               Center(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),

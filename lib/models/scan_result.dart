@@ -1,3 +1,5 @@
+import 'dart:math';
+
 enum QRType { url, email, phone, wifi, text, upi }
 
 class ScanResult {
@@ -70,10 +72,11 @@ class ScanResult {
   }
 
   static int _counter = 0;
+  static final _rng = Random();
 
   static ScanResult create(String content) {
     _counter++;
-    final id = '${DateTime.now().millisecondsSinceEpoch}_$_counter';
+    final id = '${DateTime.now().millisecondsSinceEpoch}_${_counter}_${_rng.nextInt(9999)}';
     return ScanResult(
       id: id,
       content: content,

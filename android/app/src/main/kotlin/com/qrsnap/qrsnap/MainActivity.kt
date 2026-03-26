@@ -163,6 +163,7 @@ class MainActivity : FlutterActivity() {
                                         if (resultSent) return@evaluateJavascript
                                         val physH = physStr.trim().toIntOrNull() ?: (cssHeight * 3)
                                         val cappedHeight = minOf(physH, 25000)
+                                        if (physH > 25000) Log.w(TAG, "Page truncated: ${physH}px > 25000px cap")
                                         Log.d(TAG, "Capture: ${contentWidth}x${cappedHeight} (css=$cssHeight phys=$physH)")
 
                                         // Resize WebView to full content height.

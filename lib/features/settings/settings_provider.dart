@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../main.dart';
 
 // Default color presets shown as quick-picks in the wheel dialog
 const List<Color> kPresetColors = [
@@ -45,18 +46,14 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
 
   @override
   ThemeSettings build() {
-    _load();
-    return const ThemeSettings();
-  }
-
-  Future<void> _load() async {
-    final prefs = await SharedPreferences.getInstance();
+    // Load synchronously from pre-loaded prefs — no theme flash
+    final prefs = ref.read(sharedPrefsProvider);
     final map = <int, int>{};
     for (var d = 1; d <= 7; d++) {
       final v = prefs.getInt('theme_day_$d');
       if (v != null) map[d] = v;
     }
-    state = ThemeSettings(
+    return ThemeSettings(
       weeklyColorsEnabled: prefs.getBool(_keyWeekly) ?? false,
       selectedColor: Color(prefs.getInt(_keyColor) ?? _kDefaultColor.toARGB32()),
       weeklyMap: map,
