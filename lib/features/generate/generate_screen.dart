@@ -149,7 +149,7 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
               pw.Center(
                 child: pw.Text(
                   'Generated with QRSnapify',
-                  style: pw.TextStyle(
+                  style: const pw.TextStyle(
                     fontSize: 9,
                     color: PdfColors.grey500,
                   ),
@@ -579,7 +579,8 @@ class _MultiFieldFormState extends State<_MultiFieldForm> {
           return Padding(
             padding: EdgeInsets.only(bottom: i < widget.fields.length - 1 ? AppSpacing.md : 0),
             child: DropdownButtonFormField<String>(
-              initialValue: field.dropdownValue,
+              // ignore: deprecated_member_use
+              value: field.dropdownValue,
               items: (field.dropdownItems ?? [])
                   .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                   .toList(),

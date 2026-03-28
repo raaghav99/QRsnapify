@@ -132,7 +132,7 @@ class _DebugOverlayState extends State<DebugOverlay> {
                               },
                             ),
                             const SizedBox(width: 4),
-                            _TitleBtn(
+                            const _TitleBtn(
                               label: 'CLR',
                               onTap: DebugLogger.clear,
                             ),
