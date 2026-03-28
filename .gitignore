@@ -43,3 +43,5 @@ ios/Pods/
 # Flutter generated files
 lib/generated_plugin_registrant.dart
 flutter/
+*.jks
+android/upload-keystore.jks

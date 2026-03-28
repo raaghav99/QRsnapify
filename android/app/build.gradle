@@ -48,9 +48,19 @@ android {
         versionName flutterVersionName
     }
 
+    signingConfigs {
+        release {
+            def keystoreFile = rootProject.file("upload-keystore.jks")
+            storeFile keystoreFile
+            storePassword System.getenv("STORE_PASSWORD") ?: "qrsnapify123"
+            keyAlias System.getenv("KEY_ALIAS") ?: "qrsnapify"
+            keyPassword System.getenv("KEY_PASSWORD") ?: "qrsnapify123"
+        }
+    }
+
     buildTypes {
         release {
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
         }
     }
 }
