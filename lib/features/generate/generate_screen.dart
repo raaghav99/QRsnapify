@@ -402,13 +402,13 @@ class _GenerateScreenState extends ConsumerState<GenerateScreen> {
           _FieldConfig(
             label: 'Latitude (e.g. 28.6139)',
             onChanged: controller.setGeoLat,
-            keyboard: TextInputType.numberWithOptions(signed: true, decimal: true),
+            keyboard: const TextInputType.numberWithOptions(signed: true, decimal: true),
             initialValue: state.geoLat,
           ),
           _FieldConfig(
             label: 'Longitude (e.g. 77.2090)',
             onChanged: controller.setGeoLng,
-            keyboard: TextInputType.numberWithOptions(signed: true, decimal: true),
+            keyboard: const TextInputType.numberWithOptions(signed: true, decimal: true),
             initialValue: state.geoLng,
           ),
           _FieldConfig(label: 'Label (optional)', onChanged: controller.setGeoLabel, initialValue: state.geoLabel),
@@ -579,7 +579,7 @@ class _MultiFieldFormState extends State<_MultiFieldForm> {
           return Padding(
             padding: EdgeInsets.only(bottom: i < widget.fields.length - 1 ? AppSpacing.md : 0),
             child: DropdownButtonFormField<String>(
-              value: field.dropdownValue,
+              initialValue: field.dropdownValue,
               items: (field.dropdownItems ?? [])
                   .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                   .toList(),

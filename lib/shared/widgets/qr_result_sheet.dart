@@ -3,7 +3,6 @@ import 'dart:math' show log;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:open_filex/open_filex.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -116,8 +115,8 @@ class _QrResultSheetState extends ConsumerState<QrResultSheet> {
   int _levenshtein(String a, String b) {
     final m = a.length, n = b.length;
     final dp = List.generate(m + 1, (_) => List.filled(n + 1, 0));
-    for (var i = 0; i <= m; i++) dp[i][0] = i;
-    for (var j = 0; j <= n; j++) dp[0][j] = j;
+    for (var i = 0; i <= m; i++) { dp[i][0] = i; }
+    for (var j = 0; j <= n; j++) { dp[0][j] = j; }
     for (var i = 1; i <= m; i++) {
       for (var j = 1; j <= n; j++) {
         if (a[i - 1] == b[j - 1]) {
@@ -786,15 +785,15 @@ class _QrResultSheetState extends ConsumerState<QrResultSheet> {
                           ),
                           if (vpa.isNotEmpty) ...[
                             const SizedBox(height: 10),
-                            _UpiDetailLine(ctx, 'To / जिसे', vpa),
+                            _upiDetailLine(ctx, 'To / जिसे', vpa),
                           ],
                           if (name.isNotEmpty) ...[
                             const SizedBox(height: 6),
-                            _UpiDetailLine(ctx, 'Name / नाम', name),
+                            _upiDetailLine(ctx, 'Name / नाम', name),
                           ],
                           if (amount.isNotEmpty) ...[
                             const SizedBox(height: 6),
-                            _UpiDetailLine(
+                            _upiDetailLine(
                               ctx,
                               'Amount / राशि',
                               '₹$amount',
@@ -889,7 +888,7 @@ class _QrResultSheetState extends ConsumerState<QrResultSheet> {
     );
   }
 
-  Widget _UpiDetailLine(BuildContext ctx, String label, String value,
+  Widget _upiDetailLine(BuildContext ctx, String label, String value,
       {TextStyle? valueStyle}) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,

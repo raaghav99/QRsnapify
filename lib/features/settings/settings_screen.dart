@@ -148,7 +148,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   onChanged: (_) {
                     notifier.toggleWeeklyColors();
                   },
-                  activeColor: primary,
+                  activeThumbColor: primary,
                 ),
 
                 if (settings.weeklyColorsEnabled) ...[

@@ -11,6 +11,7 @@ class DebugLogger extends ChangeNotifier {
   static final DebugLogger instance = DebugLogger._();
 
   final List<_LogEntry> _entries = [];
+  // ignore: library_private_types_in_public_api
   List<_LogEntry> get entries => List.unmodifiable(_entries);
 
   static void log(String message) {
