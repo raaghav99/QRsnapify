@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — QRSnapify</title>
+  <meta name="description" content="Privacy policy for QRSnapify — QR code scanner and generator app." />
+  <meta name="theme-color" content="#3D5AFE" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%233D5AFE'/><rect x='18' y='18' width='22' height='22' rx='3' fill='white'/><rect x='22' y='22' width='14' height='14' rx='2' fill='%233D5AFE'/><rect x='26' y='26' width='6' height='6' rx='1' fill='white'/><rect x='60' y='18' width='22' height='22' rx='3' fill='white'/><rect x='64' y='22' width='14' height='14' rx='2' fill='%233D5AFE'/><rect x='68' y='26' width='6' height='6' rx='1' fill='white'/><rect x='18' y='60' width='22' height='22' rx='3' fill='white'/><rect x='22' y='64' width='14' height='14' rx='2' fill='%233D5AFE'/><rect x='26' y='68' width='6' height='6' rx='1' fill='white'/><circle cx='50' cy='50' r='12' fill='white'/><circle cx='50' cy='50' r='7' fill='%233D5AFE'/><circle cx='50' cy='50' r='3' fill='white'/></svg>" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --blue: #3D5AFE;
+      --bg: #FAFAFA;
+      --text: #1A1A2E;
+      --text-sub: #6B7280;
+      --card: #FFFFFF;
+      --radius: 16px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0A0A0F;
+        --text: #F1F1F1;
+        --text-sub: #9CA3AF;
+        --card: #16161F;
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      background: rgba(250,250,250,0.8);
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+    @media (prefers-color-scheme: dark) {
+      nav { background: rgba(10,10,15,0.85); border-color: rgba(255,255,255,0.06); }
+    }
+    .nav-inner {
+      max-width: 860px; margin: 0 auto;
+      padding: 0 24px;
+      height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 700; font-size: 1.1rem; color: var(--text);
+      text-decoration: none;
+    }
+    .nav-logo svg { flex-shrink: 0; }
+    .nav-back {
+      font-size: 0.875rem; color: var(--blue);
+      text-decoration: none; font-weight: 500;
+    }
+    .nav-back:hover { text-decoration: underline; }
+
+    main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 100px 24px 80px;
+    }
+
+    h1 {
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      font-weight: 800;
+      margin-bottom: 8px;
+      line-height: 1.2;
+    }
+
+    .last-updated {
+      color: var(--text-sub);
+      font-size: 0.875rem;
+      margin-bottom: 48px;
+    }
+
+    .section {
+      margin-bottom: 40px;
+    }
+
+    h2 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+
+    p {
+      color: var(--text-sub);
+      margin-bottom: 12px;
+      font-size: 0.975rem;
+    }
+
+    ul {
+      color: var(--text-sub);
+      font-size: 0.975rem;
+      padding-left: 20px;
+      margin-bottom: 12px;
+    }
+
+    ul li { margin-bottom: 6px; }
+
+    .honest-note {
+      background: var(--card);
+      border-left: 3px solid var(--blue);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 16px 20px;
+      margin-bottom: 12px;
+    }
+
+    .honest-note p {
+      margin: 0;
+      color: var(--text-sub);
+      font-size: 0.9rem;
+    }
+
+    a { color: var(--blue); }
+
+    footer {
+      text-align: center;
+      padding: 32px 24px;
+      color: var(--text-sub);
+      font-size: 0.85rem;
+      border-top: 1px solid rgba(0,0,0,0.06);
+    }
+    @media (prefers-color-scheme: dark) {
+      footer { border-color: rgba(255,255,255,0.06); }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <svg width="28" height="28" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="100" height="100" rx="18" fill="#3D5AFE"/>
+        <rect x="18" y="18" width="22" height="22" rx="3" fill="white"/>
+        <rect x="22" y="22" width="14" height="14" rx="2" fill="#3D5AFE"/>
+        <rect x="26" y="26" width="6" height="6" rx="1" fill="white"/>
+        <rect x="60" y="18" width="22" height="22" rx="3" fill="white"/>
+        <rect x="64" y="22" width="14" height="14" rx="2" fill="#3D5AFE"/>
+        <rect x="68" y="26" width="6" height="6" rx="1" fill="white"/>
+        <rect x="18" y="60" width="22" height="22" rx="3" fill="white"/>
+        <rect x="22" y="64" width="14" height="14" rx="2" fill="#3D5AFE"/>
+        <rect x="26" y="68" width="6" height="6" rx="1" fill="white"/>
+        <circle cx="50" cy="50" r="12" fill="white"/>
+        <circle cx="50" cy="50" r="7" fill="#3D5AFE"/>
+        <circle cx="50" cy="50" r="3" fill="white"/>
+      </svg>
+      QRSnapify
+    </a>
+    <a href="/" class="nav-back">← Back to home</a>
+  </div>
+</nav>
+
+<main>
+  <h1>Privacy Policy</h1>
+  <p class="last-updated">Last updated: March 2026</p>
+
+  <div class="section">
+    <p>QRSnapify is a QR code scanner and generator app built by an independent developer. This policy explains honestly what data the app touches, where it goes, and what it doesn't do.</p>
+  </div>
+
+  <div class="section">
+    <h2>What data the app stores</h2>
+    <p>Everything is stored locally on your device only:</p>
+    <ul>
+      <li><strong>Scan history</strong> — every QR code you scan is saved in your device's local storage so you can view it later. You can delete individual entries or clear all history at any time from within the app.</li>
+      <li><strong>Generated QR codes</strong> — saved to your device's gallery or internal storage when you choose to save them.</li>
+      <li><strong>PDF exports</strong> — saved to your device's storage under <code>Android/data/com.qrsnap.qrsnap/files/QRSnapify_PDFs/</code>. These are deleted automatically when you delete the related history entry.</li>
+      <li><strong>App preferences</strong> — your chosen theme color and settings, stored locally.</li>
+    </ul>
+    <div class="honest-note">
+      <p>None of this data ever leaves your device. There is no server, no database, no cloud sync, and no account system.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Camera</h2>
+    <p>The app uses your camera to scan QR codes. No images or video are recorded, stored, or transmitted. The camera feed is processed in real time on your device only and immediately discarded after a QR code is detected.</p>
+  </div>
+
+  <div class="section">
+    <h2>Internet access</h2>
+    <p>The app requests internet permission for one reason only: the PDF export feature loads a webpage inside the app to generate a full-page PDF. This is the webpage you explicitly chose to export — no other network requests are made by the app itself.</p>
+    <div class="honest-note">
+      <p>Scanning and generating QR codes works fully offline. Internet is only used when you trigger a PDF export.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>What we don't collect</h2>
+    <ul>
+      <li>No analytics or usage tracking</li>
+      <li>No crash reporting (if the app crashes, we don't know)</li>
+      <li>No advertising identifiers</li>
+      <li>No location data</li>
+      <li>No contact or personal information</li>
+      <li>No data is sold or shared with third parties</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>Third-party libraries</h2>
+    <p>The app uses open-source Flutter packages for features like QR scanning, PDF generation, and image saving. None of these libraries collect personal data or make independent network requests.</p>
+    <p>When you open a URL from a scanned QR code, it opens in your device's browser or a WebView — subject to that website's own privacy policy, which is outside our control.</p>
+  </div>
+
+  <div class="section">
+    <h2>Honest gaps</h2>
+    <div class="honest-note">
+      <p>There is currently no crash reporting. If the app crashes or misbehaves on your device, we won't know unless you contact us. We plan to add opt-in crash reporting in a future version.</p>
+    </div>
+    <div class="honest-note">
+      <p>The app has no account system, so there is no way to sync or back up your history across devices or after reinstalling. All data is lost if you uninstall the app.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Children</h2>
+    <p>QRSnapify is not directed at children under 13. We do not knowingly collect any data from children.</p>
+  </div>
+
+  <div class="section">
+    <h2>Changes to this policy</h2>
+    <p>If this policy changes, the updated version will be posted on this page with a new date. We won't make changes that reduce your privacy without making them clearly visible here.</p>
+  </div>
+
+  <div class="section">
+    <h2>Contact</h2>
+    <p>Questions about this policy? Email us at <a href="mailto:raaghav.super@gmail.com">raaghav.super@gmail.com</a></p>
+  </div>
+</main>
+
+<footer>
+  <p>&copy; 2026 QRSnapify &mdash; <a href="/">Home</a></p>
+</footer>
+
+</body>
+</html>
