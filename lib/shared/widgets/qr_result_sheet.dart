@@ -492,7 +492,7 @@ class _QrResultSheetState extends ConsumerState<QrResultSheet> {
             pw.Container(
               padding:
                   const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: const pw.BoxDecoration(
+              decoration: pw.BoxDecoration(
                 color: PdfColors.indigo400,
                 borderRadius:
                     const pw.BorderRadius.all(pw.Radius.circular(8)),
