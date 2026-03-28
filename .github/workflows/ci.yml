@@ -10,6 +10,8 @@ jobs:
   build:
     name: Analyze, Test & Build APK
     runs-on: ubuntu-latest
+    env:
+      GRADLE_USER_HOME: /home/runner/.gradle
 
     steps:
       - name: Checkout

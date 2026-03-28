@@ -6,6 +6,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      GRADLE_USER_HOME: /home/runner/.gradle
 
     steps:
       - name: Checkout code
