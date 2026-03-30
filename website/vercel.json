@@ -1,7 +1,9 @@
 {
   "rewrites": [
     { "source": "/privacy", "destination": "/privacy.html" },
-    { "source": "/((?!privacy).*)", "destination": "/index.html" }
+    { "source": "/signup", "destination": "/signup.html" },
+    { "source": "/thankyou", "destination": "/thankyou.html" },
+    { "source": "/((?!privacy|signup|thankyou).*)", "destination": "/index.html" }
   ],
   "headers": [
     {

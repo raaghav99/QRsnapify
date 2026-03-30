@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>You're on the list! — QRSnapify</title>
+  <meta name="description" content="Thanks for signing up to beta test QRSnapify." />
+  <meta name="theme-color" content="#3D5AFE" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%233D5AFE'/><rect x='18' y='18' width='22' height='22' rx='3' fill='white'/><rect x='22' y='22' width='14' height='14' rx='2' fill='%233D5AFE'/><rect x='26' y='26' width='6' height='6' rx='1' fill='white'/><rect x='60' y='18' width='22' height='22' rx='3' fill='white'/><rect x='64' y='22' width='14' height='14' rx='2' fill='%233D5AFE'/><rect x='68' y='26' width='6' height='6' rx='1' fill='white'/><rect x='18' y='60' width='22' height='22' rx='3' fill='white'/><rect x='22' y='64' width='14' height='14' rx='2' fill='%233D5AFE'/><rect x='26' y='68' width='6' height='6' rx='1' fill='white'/><circle cx='50' cy='50' r='12' fill='white'/><circle cx='50' cy='50' r='7' fill='%233D5AFE'/><circle cx='50' cy='50' r='3' fill='white'/></svg>" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --blue: #3D5AFE; --bg: #FAFAFA; --text: #1A1A2E;
+      --text-sub: #6B7280; --card: #FFFFFF; --radius: 16px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: 0A0A0F; --text: #F1F1F1; --text-sub: #9CA3AF; --card: #16161F; }
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #0A0A0F; }
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, sans-serif;
+      background: var(--bg); color: var(--text); line-height: 1.6;
+      min-height: 100vh; display: flex; flex-direction: column;
+    }
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      background: rgba(250,250,250,0.8); border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+    @media (prefers-color-scheme: dark) {
+      nav { background: rgba(10,10,15,0.85); border-color: rgba(255,255,255,0.06); }
+    }
+    .nav-inner {
+      max-width: 860px; margin: 0 auto; padding: 0 24px;
+      height: 60px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 700; font-size: 1.1rem; color: var(--text); text-decoration: none;
+    }
+    .nav-back { font-size: 0.875rem; color: var(--blue); text-decoration: none; font-weight: 500; }
+    .nav-back:hover { text-decoration: underline; }
+    main {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      padding: 100px 24px 80px;
+    }
+    .content { max-width: 480px; width: 100%; text-align: center; }
+    .icon {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: rgba(61,90,254,0.1); display: flex; align-items: center;
+      justify-content: center; margin: 0 auto 24px; font-size: 32px;
+    }
+    h1 { font-size: clamp(1.8rem, 5vw, 2.4rem); font-weight: 800; margin-bottom: 12px; }
+    .sub { color: var(--text-sub); font-size: 1rem; margin-bottom: 32px; line-height: 1.7; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 15px 32px; border-radius: 14px;
+      background: var(--blue); color: #fff;
+      font-size: 1rem; font-weight: 700; text-decoration: none;
+      transition: opacity 0.2s, transform 0.2s;
+      box-shadow: 0 4px 20px rgba(61,90,254,0.3);
+    }
+    .btn:hover { opacity: 0.9; transform: translateY(-2px); }
+    .small-note { margin-top: 14px; font-size: 0.825rem; color: var(--text-sub); }
+    .wait-note {
+      margin-top: 28px; padding: 16px 18px;
+      background: rgba(61,90,254,0.06); border-left: 3px solid var(--blue);
+      border-radius: 0 12px 12px 0; text-align: left;
+    }
+    .wait-note p { color: var(--text-sub); font-size: 0.875rem; margin-bottom: 8px; line-height: 1.6; }
+    .wait-note p:last-child { margin-bottom: 0; }
+    .back-link { display: block; margin-top: 28px; color: var(--blue); font-size: 0.875rem; text-decoration: none; font-weight: 500; }
+    .back-link:hover { text-decoration: underline; }
+    footer {
+      text-align: center; padding: 24px;
+      color: var(--text-sub); font-size: 0.85rem;
+      border-top: 1px solid rgba(0,0,0,0.06);
+    }
+    @media (prefers-color-scheme: dark) { footer { border-color: rgba(255,255,255,0.06); } }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <svg width="28" height="28" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="100" height="100" rx="18" fill="#3D5AFE"/>
+        <rect x="18" y="18" width="22" height="22" rx="3" fill="white"/>
+        <rect x="22" y="22" width="14" height="14" rx="2" fill="#3D5AFE"/>
+        <rect x="26" y="26" width="6" height="6" rx="1" fill="white"/>
+        <rect x="60" y="18" width="22" height="22" rx="3" fill="white"/>
+        <rect x="64" y="22" width="14" height="14" rx="2" fill="#3D5AFE"/>
+        <rect x="68" y="26" width="6" height="6" rx="1" fill="white"/>
+        <rect x="18" y="60" width="22" height="22" rx="3" fill="white"/>
+        <rect x="22" y="64" width="14" height="14" rx="2" fill="#3D5AFE"/>
+        <rect x="26" y="68" width="6" height="6" rx="1" fill="white"/>
+        <circle cx="50" cy="50" r="12" fill="white"/>
+        <circle cx="50" cy="50" r="7" fill="#3D5AFE"/>
+        <circle cx="50" cy="50" r="3" fill="white"/>
+      </svg>
+      QRSnapify
+    </a>
+    <a href="/" class="nav-back">← Back to home</a>
+  </div>
+</nav>
+
+<main>
+  <div class="content">
+    <div class="icon">🎉</div>
+    <h1>You're on the list!</h1>
+    <p class="sub">Click below to join the QRSnapify beta on Google Play. If the app isn't accessible yet, check back in 24 hours — we're adding testers manually.</p>
+
+    <a href="https://play.google.com/store/apps/details?id=com.qrsnap.qrsnap" class="btn" target="_blank">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3.18 23.76c.3.17.64.24.99.2l13.12-11.95L13.54 8.2 3.18 23.76zM20.7 10.26l-2.78-1.6-3.57 3.25 3.57 3.25 2.8-1.62c.8-.46.8-1.22-.02-1.28zM3.01.55C2.7.97 2.5 1.54 2.5 2.26v19.48c0 .72.2 1.29.52 1.71L14.05 12 3.01.55zM4.17.04L17.29 12 13.54 15.76 4.17.04z"/></svg>
+      Open QRSnapify on Play Store
+    </a>
+
+    <p class="small-note">Access requires a Gmail account. The app is currently in closed beta.</p>
+
+    <div class="wait-note">
+      <p>⏳ <strong>Please allow up to 14 days</strong> for beta access to fully activate on Google Play. This is a Google requirement — once you opt in, Google needs up to 14 days to process your access.</p>
+      <p>⏳ <strong>कृपया 14 दिनों तक इंतज़ार करें</strong> — Google Play पर बीटा एक्सेस मिलने में इतना समय लग सकता है। एक बार opt-in करने के बाद Google को access देने में 14 दिन तक का समय लगता है।</p>
+    </div>
+
+    <a href="/" class="back-link">← Back to qrsnapify.com</a>
+  </div>
+</main>
+
+<footer>
+  <p>&copy; 2026 QRSnapify &mdash; <a href="/privacy" style="color: var(--blue);">Privacy Policy</a></p>
+</footer>
+
+</body>
+</html>
