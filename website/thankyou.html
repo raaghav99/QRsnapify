@@ -121,8 +121,8 @@
     <p class="small-note">Access requires a Gmail account. The app is currently in closed beta.</p>
 
     <div class="wait-note">
-      <p>⏳ <strong>Please allow up to 14 days</strong> for beta access to fully activate on Google Play. This is a Google requirement — once you opt in, Google needs up to 14 days to process your access.</p>
-      <p>⏳ <strong>कृपया 14 दिनों तक इंतज़ार करें</strong> — Google Play पर बीटा एक्सेस मिलने में इतना समय लग सकता है। एक बार opt-in करने के बाद Google को access देने में 14 दिन तक का समय लगता है।</p>
+      <p>⏳ <strong>Keep the app installed until <span id="deadline-en"></span>.</strong> Google requires testers to run the app for at least 14 days before production access is granted. Uninstalling before that date means your test won't count.</p>
+      <p>⏳ <strong>ऐप को <span id="deadline-hi"></span> तक अपने फ़ोन में रखें।</strong> Google को production access देने के लिए कम से कम 14 दिन तक ऐप इंस्टॉल रहना ज़रूरी है। उससे पहले अनइंस्टॉल करने पर आपका test count नहीं होगा।</p>
     </div>
 
     <a href="/" class="back-link">← Back to qrsnapify.com</a>
@@ -133,5 +133,17 @@
   <p>&copy; 2026 QRSnapify &mdash; <a href="/privacy" style="color: var(--blue);">Privacy Policy</a></p>
 </footer>
 
+<script>
+  const deadline = new Date();
+  deadline.setDate(deadline.getDate() + 14);
+
+  const enOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+  const hiOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+
+  document.getElementById('deadline-en').textContent =
+    deadline.toLocaleDateString('en-IN', enOptions);
+  document.getElementById('deadline-hi').textContent =
+    deadline.toLocaleDateString('hi-IN', hiOptions);
+</script>
 </body>
 </html>
