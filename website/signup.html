@@ -150,9 +150,15 @@
   </div>
 
   <div class="note">
-    <p>⏳ <strong>Please allow up to 14 days</strong> for beta access to activate on Google Play. This is a Google requirement, not a delay on our end.</p>
-    <p class="hindi">⏳ <strong>कृपया 14 दिनों तक इंतज़ार करें</strong> — Google Play पर बीटा एक्सेस मिलने में इतना समय लग सकता है। यह Google की ज़रूरत है, हमारी तरफ से कोई देरी नहीं है।</p>
+    <p>⏳ You'll get the invite link within 24 hours. Once you install the app, <strong>keep it on your phone until <span id="deadline-en"></span></strong> — Google needs 14 days of active testing before we can launch publicly. Uninstalling early means your test won't count.</p>
+    <p class="hindi">⏳ आपको 24 घंटे के अंदर invite link मिल जाएगा। एक बार ऐप install करने के बाद <strong><span id="deadline-hi"></span> तक उसे अपने फ़ोन में रखें</strong> — Google को public launch से पहले 14 दिन की testing चाहिए। पहले uninstall किया तो आपकी testing count नहीं होगी।</p>
   </div>
+  <script>
+    const d = new Date();
+    d.setDate(d.getDate() + 14);
+    document.getElementById('deadline-en').textContent = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+    document.getElementById('deadline-hi').textContent = d.toLocaleDateString('hi-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+  </script>
 </main>
 
 <footer>
