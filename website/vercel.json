@@ -3,7 +3,8 @@
     { "source": "/privacy", "destination": "/privacy.html" },
     { "source": "/signup", "destination": "/signup.html" },
     { "source": "/thankyou", "destination": "/thankyou.html" },
-    { "source": "/((?!privacy|signup|thankyou).*)", "destination": "/index.html" }
+    { "source": "/preview", "destination": "/preview.html" },
+    { "source": "/((?!privacy|signup|thankyou|preview).*)", "destination": "/index.html" }
   ],
   "headers": [
     {
