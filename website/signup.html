@@ -129,10 +129,7 @@
   <p class="sub">Get early access to QRSnapify on Google Play. We'll send you the invite link within 24 hours.</p>
 
   <div class="card">
-    <form action="https://formspree.io/f/xreoqrwl" method="POST">
-      <input type="hidden" name="_next" value="https://qrsnapify.vercel.app/thankyou" />
-      <input type="hidden" name="_subject" value="New QRSnapify Beta Tester Signup" />
-
+    <form id="signupForm" onsubmit="handleSubmit(event)">
       <div class="field">
         <label for="name">Full Name</label>
         <input type="text" id="name" name="name" placeholder="Your name" required />
@@ -145,7 +142,8 @@
           title="Please enter a valid Gmail address (@gmail.com)" />
       </div>
 
-      <button type="submit" class="btn">Request Access</button>
+      <div id="error-msg" style="display:none; color:#EF4444; font-size:0.875rem; margin-bottom:10px;"></div>
+      <button id="submit-btn" type="submit" class="btn">Request Access</button>
     </form>
   </div>
 
@@ -154,6 +152,46 @@
     <p class="hindi">⏳ आपको 24 घंटे के अंदर invite link मिल जाएगा। एक बार ऐप install करने के बाद <strong><span id="deadline-hi"></span> तक उसे अपने फ़ोन में रखें</strong> — Google को public launch से पहले 14 दिन की testing चाहिए। पहले uninstall किया तो आपकी testing count नहीं होगी।</p>
   </div>
   <script>
+    if (localStorage.getItem('qrsnap_beta_signed')) {
+      window.location.replace('/thankyou');
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('error-msg');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    async function handleSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+
+      if (!email.endsWith('@gmail.com')) {
+        showError('Please enter a valid @gmail.com address.');
+        return;
+      }
+
+      const btn = document.getElementById('submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+
+      try {
+        await fetch('https://script.google.com/macros/s/AKfycbxxh_Z_PwPqiLDW_hyjYfPrxpyj-xGU-nR7_WYpgFN9qSsrBDoh144ZCTPgwWdpSsc/exec', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email }),
+          mode: 'no-cors'
+        });
+        localStorage.setItem('qrsnap_beta_signed', '1');
+        window.location.href = '/thankyou';
+      } catch (err) {
+        showError('Something went wrong. Please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Request Access';
+      }
+    }
+
     const d = new Date();
     d.setDate(d.getDate() + 14);
     document.getElementById('deadline-en').textContent = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
