@@ -127,35 +127,14 @@
       width: 44px; height: 5px; background: #222; border-radius: 3px; z-index: 2;
     }
     .phone-screen {
-      position: relative; overflow: hidden;
-      border-radius: 28px; background: #000;
+      overflow: hidden; border-radius: 28px; background: #000;
       aspect-ratio: 1080 / 2160;
     }
     .phone-screen img {
-      position: absolute; top: 0; left: 0;
-      width: 100%; height: 100%; object-fit: cover; border-radius: 28px;
-      opacity: 0; transform: translateY(18px);
-      transition: opacity 0.5s ease, transform 0.5s ease;
+      width: 100%; display: block; border-radius: 28px;
     }
-    .phone-screen img.slide-active {
-      opacity: 1; transform: translateY(0);
-    }
-    .phone-screen img.slide-exit {
-      opacity: 0; transform: translateY(-18px);
-    }
-    .slide-dots {
-      display: flex; gap: 8px; justify-content: center; margin-top: 16px;
-    }
-    .slide-dot {
-      width: 6px; height: 6px; border-radius: 3px;
-      background: rgba(107,114,128,0.3); transition: all 0.3s; cursor: pointer;
-    }
-    .slide-dot.active { width: 20px; background: var(--blue); }
-    .slide-label {
-      margin-top: 10px; font-size: 13px; font-weight: 600;
-      color: var(--text-sub); min-height: 20px;
-    }
-    .hero-cta { margin-top: 0; }
+    .phone-showcase-wrap { margin-bottom: 28px; }
+    .hero-cta { margin-top: 4px; }
     @media (max-width: 480px) {
       .phone-shell-single { width: 180px; }
     }
@@ -443,27 +422,21 @@
 
 <section class="hero">
   <div class="hero-content fade-up">
-    <div class="badge">Free · No Ads · No Tracking</div>
-    <h1>Scan. Save.<br/><span class="gradient">Generate.</span></h1>
-    <p>A fast, beautiful QR code scanner and generator for Android.</p>
 
-    <!-- Phone Showcase -->
+    <!-- Phone first -->
     <div class="phone-showcase-wrap">
       <div class="phone-shell-single">
         <div class="phone-notch"></div>
-        <div class="phone-screen" id="slideshow">
-          <img src="/screenshots/01_generate_screen.jpg" alt="Generate QR code" class="slide-active" />
-          <img src="/screenshots/04_scan_result_url.jpg" alt="Scan result" />
-          <img src="/screenshots/07_history_with_items.jpg" alt="Scan history" />
+        <div class="phone-screen">
+          <img src="/screenshots/01_generate_screen.jpg" alt="QRSnapify app screenshot" />
         </div>
       </div>
-      <div class="slide-dots">
-        <div class="slide-dot active" onclick="goToSlide(0)"></div>
-        <div class="slide-dot" onclick="goToSlide(1)"></div>
-        <div class="slide-dot" onclick="goToSlide(2)"></div>
-      </div>
-      <div class="slide-label" id="slide-label">Generate QR Codes</div>
     </div>
+
+    <!-- Then text -->
+    <div class="badge">Free · No Ads · No Tracking</div>
+    <h1>Scan. Save.<br/><span class="gradient">Generate.</span></h1>
+    <p>A fast, beautiful QR code scanner and generator for Android.</p>
 
     <!-- CTA -->
     <div class="hero-cta">
@@ -692,27 +665,7 @@
 
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closePopup(); });
 
-  // ── Slideshow ──────────────────────────────────────────
-  const slides = document.querySelectorAll('#slideshow img');
-  const dots = document.querySelectorAll('.slide-dot');
-  const labels = ['Generate QR Codes', 'Instant Scan Results', 'Full History'];
-  let current = 0, timer;
 
-  function goToSlide(n) {
-    slides[current].classList.remove('slide-active');
-    slides[current].classList.add('slide-exit');
-    const prev = current;
-    setTimeout(() => slides[prev].classList.remove('slide-exit'), 500);
-    dots[current].classList.remove('active');
-    current = n;
-    slides[current].classList.add('slide-active');
-    dots[current].classList.add('active');
-    document.getElementById('slide-label').textContent = labels[current];
-    clearInterval(timer);
-    timer = setInterval(() => goToSlide((current + 1) % slides.length), 3000);
-  }
-
-  timer = setInterval(() => goToSlide((current + 1) % slides.length), 3000);
 </script>
 
 </body>
