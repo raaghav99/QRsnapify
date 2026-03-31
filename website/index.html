@@ -213,6 +213,72 @@
       box-shadow: 0 2px 12px rgba(61,90,254,0.1);
     }
 
+    /* ─── Screenshots ────────────────────────────────────── */
+    .screenshots {
+      max-width: 1100px; margin: 0 auto; padding: 60px 24px 80px; text-align: center;
+    }
+    .screenshots h2 {
+      font-size: 36px; font-weight: 800; letter-spacing: -1px; margin-bottom: 12px;
+    }
+    .screenshots .subtitle {
+      color: var(--text-sub); font-size: 17px; margin-bottom: 48px;
+    }
+    /* Desktop: 3 phones */
+    .phone-row {
+      display: flex; gap: 24px; justify-content: center; align-items: flex-end; flex-wrap: wrap;
+    }
+    .phone-frame { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .phone-frame .phone-label { font-size: 13px; font-weight: 600; color: var(--text-sub); }
+    .phone-shell {
+      width: 200px; border-radius: 28px; background: #111; padding: 8px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25), 0 4px 12px rgba(0,0,0,0.15);
+      border: 1.5px solid rgba(255,255,255,0.08); position: relative;
+    }
+    .phone-shell::before {
+      content: ''; position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+      width: 40px; height: 5px; background: #333; border-radius: 3px; z-index: 1;
+    }
+    .phone-shell img { width: 100%; border-radius: 22px; display: block; }
+    .phone-frame.center-phone .phone-shell {
+      width: 230px;
+      box-shadow: 0 28px 80px rgba(61,90,254,0.25), 0 8px 24px rgba(0,0,0,0.2);
+    }
+    /* Mobile: single slideshow phone */
+    .phone-slide-wrap { display: none; flex-direction: column; align-items: center; gap: 0; }
+    .phone-shell-single {
+      width: 220px; border-radius: 36px; background: #111; padding: 9px;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.28), 0 8px 24px rgba(0,0,0,0.18);
+      border: 1.5px solid rgba(255,255,255,0.08); position: relative;
+    }
+    .phone-notch {
+      position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
+      width: 44px; height: 5px; background: #222; border-radius: 3px; z-index: 2;
+    }
+    .phone-screen {
+      position: relative; overflow: hidden; border-radius: 28px;
+      background: #000; aspect-ratio: 1080 / 2160;
+    }
+    .phone-screen img {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      object-fit: cover; border-radius: 28px;
+      opacity: 0; transform: translateY(18px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .phone-screen img.slide-active { opacity: 1; transform: translateY(0); }
+    .phone-screen img.slide-exit  { opacity: 0; transform: translateY(-18px); }
+    .slide-dots { display: flex; gap: 8px; justify-content: center; margin-top: 16px; }
+    .slide-dot {
+      width: 6px; height: 6px; border-radius: 3px;
+      background: rgba(107,114,128,0.3); transition: all 0.3s; cursor: pointer;
+    }
+    .slide-dot.active { width: 20px; background: var(--blue); }
+    .slide-label { margin-top: 10px; font-size: 13px; font-weight: 600; color: var(--text-sub); min-height: 20px; }
+    /* Breakpoint */
+    @media (max-width: 768px) {
+      .phone-row  { display: none; }
+      .phone-slide-wrap { display: flex; }
+    }
+
     /* ─── CTA ─────────────────────────────────────────────── */
     .cta-section {
       text-align: center; padding: 80px 24px 100px;
@@ -520,6 +586,51 @@
   </div>
 </section>
 
+<section class="screenshots">
+  <h2 class="fade-up">See it in action</h2>
+  <p class="subtitle fade-up">Clean interface. Zero clutter.</p>
+
+  <!-- Desktop: 3 static phones -->
+  <div class="phone-row fade-up">
+    <div class="phone-frame">
+      <div class="phone-shell">
+        <img src="/screenshots/07_history_with_items.jpg" alt="Scan history" loading="lazy" />
+      </div>
+      <span class="phone-label">History</span>
+    </div>
+    <div class="phone-frame center-phone">
+      <div class="phone-shell">
+        <img src="/screenshots/01_generate_screen.jpg" alt="Generate QR code" loading="lazy" />
+      </div>
+      <span class="phone-label">Generate</span>
+    </div>
+    <div class="phone-frame">
+      <div class="phone-shell">
+        <img src="/screenshots/04_scan_result_url.jpg" alt="Scan result" loading="lazy" />
+      </div>
+      <span class="phone-label">Scan Result</span>
+    </div>
+  </div>
+
+  <!-- Mobile: single slideshow -->
+  <div class="phone-slide-wrap fade-up">
+    <div class="phone-shell-single">
+      <div class="phone-notch"></div>
+      <div class="phone-screen" id="slideshow">
+        <img src="/screenshots/01_generate_screen.jpg" alt="Generate QR code" class="slide-active" />
+        <img src="/screenshots/04_scan_result_url.jpg" alt="Scan result" />
+        <img src="/screenshots/07_history_with_items.jpg" alt="Scan history" />
+      </div>
+    </div>
+    <div class="slide-dots">
+      <div class="slide-dot active" onclick="goToSlide(0)"></div>
+      <div class="slide-dot" onclick="goToSlide(1)"></div>
+      <div class="slide-dot" onclick="goToSlide(2)"></div>
+    </div>
+    <div class="slide-label" id="slide-label">Generate QR Codes</div>
+  </div>
+</section>
+
 <section class="cta-section" id="download">
   <h2 class="fade-up">Ready to snap?</h2>
   <p class="fade-up">QRSnapify is live on Google Play for early access users. Sign up and get access within 24 hours.</p>
@@ -629,6 +740,28 @@
   }
 
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closePopup(); });
+
+  // ── Mobile Slideshow ───────────────────────────────────
+  const slides = document.querySelectorAll('#slideshow img');
+  const dots   = document.querySelectorAll('.slide-dot');
+  const labels = ['Generate QR Codes', 'Instant Scan Results', 'Full History'];
+  let cur = 0, slTimer;
+
+  function goToSlide(n) {
+    slides[cur].classList.remove('slide-active');
+    slides[cur].classList.add('slide-exit');
+    const prev = cur;
+    setTimeout(() => slides[prev].classList.remove('slide-exit'), 500);
+    dots[cur].classList.remove('active');
+    cur = n;
+    slides[cur].classList.add('slide-active');
+    dots[cur].classList.add('active');
+    document.getElementById('slide-label').textContent = labels[cur];
+    clearInterval(slTimer);
+    slTimer = setInterval(() => goToSlide((cur + 1) % slides.length), 3000);
+  }
+
+  slTimer = setInterval(() => goToSlide((cur + 1) % slides.length), 3000);
 </script>
 
 </body>
