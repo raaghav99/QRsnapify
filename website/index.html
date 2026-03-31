@@ -229,6 +229,96 @@
     footer a { color: var(--blue); text-decoration: none; }
     footer a:hover { text-decoration: underline; }
 
+    /* ─── Popup ───────────────────────────────────────────── */
+    .overlay {
+      display: none; position: fixed; inset: 0; z-index: 999;
+      background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+      align-items: center; justify-content: center; padding: 16px;
+    }
+    .overlay.open { display: flex; }
+    .popup {
+      background: var(--card); border-radius: 20px;
+      width: 100%; max-width: 520px; max-height: 90vh;
+      overflow-y: auto; padding: 32px 28px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.2);
+      position: relative;
+    }
+    .popup-close {
+      position: absolute; top: 16px; right: 16px;
+      background: none; border: none; cursor: pointer;
+      color: var(--text-sub); font-size: 22px; line-height: 1;
+      padding: 4px 8px; border-radius: 8px;
+    }
+    .popup-close:hover { background: rgba(107,114,128,0.1); }
+    .popup h2 { font-size: 1.5rem; font-weight: 800; margin-bottom: 6px; }
+    .popup .sub { color: var(--text-sub); font-size: 0.9rem; margin-bottom: 20px; }
+    .popup .field { margin-bottom: 14px; }
+    .popup label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; }
+    .popup input {
+      width: 100%; padding: 11px 14px; border-radius: 10px;
+      border: 1.5px solid rgba(107,114,128,0.2);
+      background: var(--bg); color: var(--text);
+      font-size: 0.95rem; font-family: inherit; outline: none;
+      transition: border-color 0.2s;
+    }
+    .popup input:focus { border-color: var(--blue); }
+    .popup-btn {
+      width: 100%; padding: 13px; border-radius: 12px;
+      background: var(--blue); color: #fff;
+      font-size: 1rem; font-weight: 700; border: none;
+      cursor: pointer; transition: opacity 0.2s; margin-top: 4px;
+    }
+    .popup-btn:hover { opacity: 0.9; }
+    .popup-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .popup-error { color: #EF4444; font-size: 0.85rem; margin-bottom: 10px; display: none; }
+    .faq { margin-top: 24px; border-top: 1px solid rgba(107,114,128,0.12); padding-top: 20px; }
+    .faq-item { margin-bottom: 14px; }
+    .faq-q {
+      font-size: 0.875rem; font-weight: 700; color: var(--text);
+      cursor: pointer; display: flex; justify-content: space-between;
+      align-items: center; padding: 4px 0; user-select: none;
+    }
+    .faq-q span { color: var(--text-sub); font-size: 18px; }
+    .faq-a {
+      font-size: 0.85rem; color: var(--text-sub); line-height: 1.6;
+      max-height: 0; overflow: hidden; transition: max-height 0.3s ease;
+    }
+    .faq-a.open { max-height: 300px; }
+    /* Success state */
+    .popup-success { display: none; text-align: center; }
+    .popup-success .tick { font-size: 48px; margin-bottom: 12px; }
+    .popup-success h2 { margin-bottom: 8px; }
+    .popup-success .sub { margin-bottom: 20px; }
+    .play-btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      width: 100%; justify-content: center;
+      padding: 14px; border-radius: 12px;
+      background: var(--blue); color: #fff;
+      font-size: 1rem; font-weight: 700; text-decoration: none;
+      transition: opacity 0.2s; margin-bottom: 12px;
+    }
+    .play-btn:hover { opacity: 0.9; }
+    .account-warn {
+      background: rgba(251,191,36,0.1); border-left: 3px solid #FBBF24;
+      border-radius: 0 10px 10px 0; padding: 12px 14px;
+      font-size: 0.82rem; color: var(--text-sub); text-align: left;
+      margin-top: 4px;
+    }
+    .deadline-note {
+      margin-top: 14px; padding: 12px 14px;
+      background: rgba(61,90,254,0.06); border-left: 3px solid var(--blue);
+      border-radius: 0 10px 10px 0; font-size: 0.82rem; color: var(--text-sub);
+      text-align: left;
+    }
+    @media (prefers-color-scheme: dark) {
+      .popup { box-shadow: 0 24px 60px rgba(0,0,0,0.5); }
+      .popup input { border-color: rgba(255,255,255,0.1); }
+      .popup input:focus { border-color: var(--blue); }
+    }
+    @media (max-width: 480px) {
+      .popup { padding: 24px 18px; border-radius: 16px; }
+    }
+
     /* ─── Animations ──────────────────────────────────────── */
     .fade-up {
       opacity: 0; transform: translateY(30px);
@@ -281,7 +371,7 @@
     <h1>Scan. Save.<br/><span class="gradient">Generate.</span></h1>
     <p>A fast, beautiful QR code scanner and generator for Android. No ads. No tracking. No nonsense.</p>
     <div class="hero-actions">
-      <a href="/signup" class="btn btn-primary" style="flex:1; justify-content:center;">
+      <a href="#" onclick="openPopup();return false;" class="btn btn-primary" style="flex:1; justify-content:center;">
         <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734c0-.382.218-.72.609-.92zM14.862 13.07l2.313 2.313-8.088 4.588 5.775-6.9zm3.838-2.18l2.038 1.157a1.09 1.09 0 010 1.906l-2.038 1.157-2.545-2.11 2.545-2.11zM9.087 4.033l8.088 4.588-2.313 2.313-5.775-6.9z"/></svg>
         Early Access
       </a>
@@ -347,7 +437,7 @@
   <h2 class="fade-up">Ready to snap?</h2>
   <p class="fade-up">QRSnapify is live on Google Play for early access users. Sign up and get access within 24 hours.</p>
   <div class="cta-buttons fade-up">
-    <a href="/signup" class="btn btn-primary">
+    <a href="#" onclick="openPopup();return false;" class="btn btn-primary">
       <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734c0-.382.218-.72.609-.92zM14.862 13.07l2.313 2.313-8.088 4.588 5.775-6.9zm3.838-2.18l2.038 1.157a1.09 1.09 0 010 1.906l-2.038 1.157-2.545-2.11 2.545-2.11zM9.087 4.033l8.088 4.588-2.313 2.313-5.775-6.9z"/></svg>
       Early Access
     </a>
@@ -358,11 +448,140 @@
   <p>&copy; 2026 QRSnapify &mdash; Built with care &mdash; <a href="/privacy" style="color:inherit;opacity:0.6;">Privacy Policy</a></p>
 </footer>
 
+<!-- ─── Early Access Popup ─────────────────────────────── -->
+<div class="overlay" id="overlay" onclick="handleOverlayClick(event)">
+  <div class="popup" id="popup">
+    <button class="popup-close" onclick="closePopup()">✕</button>
+
+    <!-- Step 1: Form -->
+    <div id="popup-form">
+      <h2>Get Early Access</h2>
+      <p class="sub">We'll add you as a tester on Google Play and send you the link within 24 hours.</p>
+
+      <div class="field">
+        <label for="p-name">Full Name</label>
+        <input type="text" id="p-name" placeholder="Your name" required />
+      </div>
+      <div class="field">
+        <label for="p-email">Gmail Address</label>
+        <input type="email" id="p-email" placeholder="yourname@gmail.com" required />
+      </div>
+      <div class="popup-error" id="popup-error"></div>
+      <button class="popup-btn" id="popup-submit" onclick="handleSubmit()">Request Access</button>
+
+      <!-- FAQ -->
+      <div class="faq">
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">Why do we need your Gmail? <span>+</span></div>
+          <div class="faq-a">Google Play's closed testing requires us to manually add each tester's Gmail before they can install the app. We can't just publish a public link — every tester has to be approved one by one.<br><br>That's the only reason we ask. We store it in our private tester sheet, don't share it with anyone, and won't use it for anything other than sending you the access link.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">Why 24 hours? <span>+</span></div>
+          <div class="faq-a">We add testers manually, not automatically. Once you sign up, we review the submission, add your Gmail to Play Console, and send you the access link. This usually happens within a day.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">What happens after you install? <span>+</span></div>
+          <div class="faq-a">Google requires at least 12 testers to run the app for 14 days before we can apply for a public launch. That's it — no surveys, no tasks, just keep the app installed and use it normally.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Success -->
+    <div class="popup-success" id="popup-success">
+      <div class="tick">🎉</div>
+      <h2>You're on the list!</h2>
+      <p class="sub">We'll add you within 24 hours and send you the link on Gmail. Once added, click below to install.</p>
+
+      <a href="https://play.google.com/store/apps/details?id=com.qrsnap.qrsnap" class="play-btn" target="_blank">
+        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734c0-.382.218-.72.609-.92zM14.862 13.07l2.313 2.313-8.088 4.588 5.775-6.9zm3.838-2.18l2.038 1.157a1.09 1.09 0 010 1.906l-2.038 1.157-2.545-2.11 2.545-2.11zM9.087 4.033l8.088 4.588-2.313 2.313-5.775-6.9z"/></svg>
+        Open on Google Play
+      </a>
+
+      <div class="account-warn">
+        ⚠️ <strong>Multiple Google accounts?</strong> Switch to the Gmail you signed up with on Play Store before clicking the link — otherwise you'll see "Item not found".
+      </div>
+
+      <div class="deadline-note" id="deadline-note">
+        ⏳ Keep the app installed until <strong id="deadline-en2"></strong> — Google needs 14 days of testing before we can go public.<br><br>
+        ⏳ ऐप को <strong id="deadline-hi2"></strong> तक फ़ोन में रखें — Google को public launch से पहले 14 दिन की testing चाहिए।
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
   const obs = new IntersectionObserver((entries) => {
     entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }});
   }, { threshold: 0.15 });
   document.querySelectorAll('.fade-up').forEach(el => obs.observe(el));
+
+  function openPopup() {
+    if (localStorage.getItem('qrsnap_beta_signed')) {
+      document.getElementById('popup-form').style.display = 'none';
+      document.getElementById('popup-success').style.display = 'block';
+      setDeadline();
+    }
+    document.getElementById('overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closePopup() {
+    document.getElementById('overlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function handleOverlayClick(e) {
+    if (e.target === document.getElementById('overlay')) closePopup();
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('popup-error');
+    el.textContent = msg; el.style.display = 'block';
+  }
+
+  function toggleFaq(el) {
+    const ans = el.nextElementSibling;
+    const span = el.querySelector('span');
+    ans.classList.toggle('open');
+    span.textContent = ans.classList.contains('open') ? '−' : '+';
+  }
+
+  function setDeadline() {
+    const d = new Date();
+    d.setDate(d.getDate() + 14);
+    const opts = { day: 'numeric', month: 'long', year: 'numeric' };
+    document.getElementById('deadline-en2').textContent = d.toLocaleDateString('en-IN', opts);
+    document.getElementById('deadline-hi2').textContent = d.toLocaleDateString('hi-IN', opts);
+  }
+
+  async function handleSubmit() {
+    const name = document.getElementById('p-name').value.trim();
+    const email = document.getElementById('p-email').value.trim();
+
+    if (!name) { showError('Please enter your name.'); return; }
+    if (!email.endsWith('@gmail.com')) { showError('Please enter a valid @gmail.com address.'); return; }
+
+    const btn = document.getElementById('popup-submit');
+    btn.disabled = true; btn.textContent = 'Submitting...';
+
+    try {
+      await fetch('https://script.google.com/macros/s/AKfycbxxh_Z_PwPqiLDW_hyjYfPrxpyj-xGU-nR7_WYpgFN9qSsrBDoh144ZCTPgwWdpSsc/exec', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email }),
+        mode: 'no-cors'
+      });
+      localStorage.setItem('qrsnap_beta_signed', '1');
+      document.getElementById('popup-form').style.display = 'none';
+      document.getElementById('popup-success').style.display = 'block';
+      setDeadline();
+    } catch (err) {
+      showError('Something went wrong. Please try again.');
+      btn.disabled = false; btn.textContent = 'Request Access';
+    }
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closePopup(); });
 </script>
 
 </body>

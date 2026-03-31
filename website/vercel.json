@@ -1,10 +1,8 @@
 {
   "rewrites": [
     { "source": "/privacy", "destination": "/privacy.html" },
-    { "source": "/signup", "destination": "/signup.html" },
-    { "source": "/thankyou", "destination": "/thankyou.html" },
     { "source": "/preview", "destination": "/preview.html" },
-    { "source": "/((?!privacy|signup|thankyou|preview).*)", "destination": "/index.html" }
+    { "source": "/((?!privacy|preview).*)", "destination": "/index.html" }
   ],
   "headers": [
     {
