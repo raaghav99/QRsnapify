@@ -84,21 +84,21 @@
     /* ─── Hero ────────────────────────────────────────────── */
     .hero {
       min-height: 100vh; display: flex; align-items: center; justify-content: center;
-      text-align: center; padding: 100px 24px 80px;
+      text-align: center; padding: 120px 24px 80px;
       background:
-        radial-gradient(ellipse 70% 50% at 50% 0%, rgba(61,90,254,0.12) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 50% at 50% 0%, rgba(61,90,254,0.12) 0%, transparent 70%),
         var(--bg);
     }
-    .hero-content { max-width: 600px; }
+    .hero-content { max-width: 680px; }
     .badge {
       display: inline-block; padding: 6px 16px; border-radius: 100px;
       background: rgba(61,90,254,0.1); color: var(--blue);
-      font-size: 13px; font-weight: 600; margin-bottom: 20px;
+      font-size: 13px; font-weight: 600; margin-bottom: 24px;
       border: 1px solid rgba(61,90,254,0.15);
     }
     h1 {
-      font-size: clamp(36px, 6vw, 58px); font-weight: 800;
-      line-height: 1.08; letter-spacing: -2px; margin-bottom: 14px;
+      font-size: clamp(40px, 7vw, 68px); font-weight: 800;
+      line-height: 1.08; letter-spacing: -2px; margin-bottom: 20px;
     }
     h1 .gradient {
       background: linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%);
@@ -106,37 +106,13 @@
       -webkit-text-fill-color: transparent;
     }
     .hero p {
-      font-size: 16px; color: var(--text-sub); max-width: 420px;
+      font-size: 18px; color: var(--text-sub); max-width: 480px;
       margin: 0 auto 36px; line-height: 1.7;
     }
-
-    /* ─── Phone Showcase (in hero) ───────────────────────── */
-    .phone-showcase-wrap {
-      margin: 0 auto 32px; display: inline-block;
-    }
-    .phone-shell-single {
-      width: 220px; border-radius: 36px;
-      background: #111; padding: 9px;
-      box-shadow: 0 32px 80px rgba(0,0,0,0.28), 0 8px 24px rgba(0,0,0,0.18),
-                  inset 0 1px 0 rgba(255,255,255,0.1);
-      border: 1.5px solid rgba(255,255,255,0.08);
-      position: relative;
-    }
-    .phone-notch {
-      position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
-      width: 44px; height: 5px; background: #222; border-radius: 3px; z-index: 2;
-    }
-    .phone-screen {
-      overflow: hidden; border-radius: 28px; background: #000;
-      aspect-ratio: 1080 / 2160;
-    }
-    .phone-screen img {
-      width: 100%; display: block; border-radius: 28px;
-    }
-    .phone-showcase-wrap { margin-bottom: 28px; }
-    .hero-cta { margin-top: 4px; }
-    @media (max-width: 480px) {
-      .phone-shell-single { width: 180px; }
+    .hero-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    @media (max-width: 520px) {
+      .hero-actions { flex-direction: column; align-items: stretch; }
+      .hero-actions .btn { justify-content: center; }
     }
 
     /* ─── Buttons ─────────────────────────────────────────── */
@@ -286,6 +262,56 @@
       .footer-inner { flex-direction: column; align-items: flex-start; gap: 20px; }
     }
 
+    /* ─── Screenshots ────────────────────────────────────── */
+    .screenshots {
+      max-width: 1100px; margin: 0 auto; padding: 60px 24px 80px;
+      text-align: center;
+    }
+    .screenshots h2 {
+      font-size: 36px; font-weight: 800; letter-spacing: -1px; margin-bottom: 12px;
+    }
+    .screenshots .subtitle {
+      color: var(--text-sub); font-size: 17px; margin-bottom: 48px;
+    }
+    .phone-row {
+      display: flex; gap: 24px; justify-content: center; align-items: flex-end;
+      flex-wrap: wrap;
+    }
+    .phone-frame {
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+    }
+    .phone-frame .phone-label {
+      font-size: 13px; font-weight: 600; color: var(--text-sub); letter-spacing: 0.3px;
+    }
+    .phone-shell {
+      width: 200px; border-radius: 28px;
+      background: #111; padding: 8px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25), 0 4px 12px rgba(0,0,0,0.15);
+      border: 1.5px solid rgba(255,255,255,0.08);
+      position: relative;
+    }
+    .phone-shell::before {
+      content: ''; position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+      width: 40px; height: 5px; background: #333; border-radius: 3px; z-index: 1;
+    }
+    .phone-shell img {
+      width: 100%; border-radius: 22px; display: block;
+    }
+    .phone-frame.center-phone .phone-shell {
+      width: 230px;
+      box-shadow: 0 28px 80px rgba(61,90,254,0.25), 0 8px 24px rgba(0,0,0,0.2);
+    }
+    @media (max-width: 700px) {
+      .phone-row { gap: 16px; }
+      .phone-shell { width: 150px; }
+      .phone-frame.center-phone .phone-shell { width: 175px; }
+      .phone-shell::before { width: 30px; top: 10px; }
+    }
+    @media (max-width: 480px) {
+      .phone-row { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 12px; justify-content: flex-start; }
+      .phone-shell { width: 140px; }
+      .phone-frame.center-phone .phone-shell { width: 160px; }
+    }
 
     /* ─── Popup ───────────────────────────────────────────── */
     .overlay {
@@ -308,28 +334,11 @@
       padding: 4px 8px; border-radius: 8px;
     }
     .popup-close:hover { background: rgba(107,114,128,0.1); }
+    .popup { text-align: center; }
     .popup h2 { font-size: 1.5rem; font-weight: 800; margin-bottom: 6px; }
     .popup .sub { color: var(--text-sub); font-size: 0.9rem; margin-bottom: 20px; }
-    .popup .field { margin-bottom: 14px; }
-    .popup label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; }
-    .popup input {
-      width: 100%; padding: 11px 14px; border-radius: 10px;
-      border: 1.5px solid rgba(107,114,128,0.2);
-      background: var(--bg); color: var(--text);
-      font-size: 0.95rem; font-family: inherit; outline: none;
-      transition: border-color 0.2s;
-    }
-    .popup input:focus { border-color: var(--blue); }
-    .popup-btn {
-      width: 100%; padding: 13px; border-radius: 12px;
-      background: var(--blue); color: #fff;
-      font-size: 1rem; font-weight: 700; border: none;
-      cursor: pointer; transition: opacity 0.2s; margin-top: 4px;
-    }
-    .popup-btn:hover { opacity: 0.9; }
-    .popup-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-    .popup-error { color: #EF4444; font-size: 0.85rem; margin-bottom: 10px; display: none; }
-    .faq { margin-top: 24px; border-top: 1px solid rgba(107,114,128,0.12); padding-top: 20px; }
+    .tick { font-size: 48px; margin-bottom: 12px; }
+    .faq { margin-top: 24px; border-top: 1px solid rgba(107,114,128,0.12); padding-top: 20px; text-align: left; }
     .faq-item { margin-bottom: 14px; }
     .faq-q {
       font-size: 0.875rem; font-weight: 700; color: var(--text);
@@ -342,11 +351,6 @@
       max-height: 0; overflow: hidden; transition: max-height 0.3s ease;
     }
     .faq-a.open { max-height: 300px; }
-    /* Success state */
-    .popup-success { display: none; text-align: center; }
-    .popup-success .tick { font-size: 48px; margin-bottom: 12px; }
-    .popup-success h2 { margin-bottom: 8px; }
-    .popup-success .sub { margin-bottom: 20px; }
     .play-btn {
       display: inline-flex; align-items: center; gap: 10px;
       width: 100%; justify-content: center;
@@ -417,32 +421,24 @@
       </svg>
       QR<span>Snapify</span>
     </a>
+    <a href="mailto:raaghav.super@gmail.com" title="Contact" style="display: inline-flex; padding: 10px 14px; border-radius: 10px; background: var(--card); border: 1px solid rgba(107,114,128,0.15); transition: all 0.2s; text-decoration: none;">
+      <svg width="22" height="22" fill="var(--blue)" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+    </a>
   </div>
 </nav>
 
 <section class="hero">
   <div class="hero-content fade-up">
-
-    <!-- Phone first -->
-    <div class="phone-showcase-wrap">
-      <div class="phone-shell-single">
-        <div class="phone-notch"></div>
-        <div class="phone-screen">
-          <img src="/screenshots/01_generate_screen.jpg" alt="QRSnapify app screenshot" />
-        </div>
-      </div>
-    </div>
-
-    <!-- Then text -->
     <div class="badge">Free · No Ads · No Tracking</div>
     <h1>Scan. Save.<br/><span class="gradient">Generate.</span></h1>
-    <p>A fast, beautiful QR code scanner and generator for Android.</p>
-
-    <!-- CTA -->
-    <div class="hero-cta">
-      <a href="#" onclick="openPopup();return false;" class="btn btn-primary">
+    <p>A fast, beautiful QR code scanner and generator for Android. No ads. No tracking. No nonsense.</p>
+    <div class="hero-actions">
+      <a href="#" onclick="openPopup();return false;" class="btn btn-primary" style="flex:1; justify-content:center;">
         <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734c0-.382.218-.72.609-.92zM14.862 13.07l2.313 2.313-8.088 4.588 5.775-6.9zm3.838-2.18l2.038 1.157a1.09 1.09 0 010 1.906l-2.038 1.157-2.545-2.11 2.545-2.11zM9.087 4.033l8.088 4.588-2.313 2.313-5.775-6.9z"/></svg>
-        Get Early Access
+        Early Access
+      </a>
+      <a href="#features" class="btn btn-secondary" style="flex:1; justify-content:center;">
+        See features
       </a>
     </div>
   </div>
@@ -499,6 +495,30 @@
   </div>
 </section>
 
+<section class="screenshots">
+  <h2 class="fade-up">See it in action</h2>
+  <p class="subtitle fade-up">Clean interface. Zero clutter.</p>
+  <div class="phone-row fade-up">
+    <div class="phone-frame">
+      <div class="phone-shell">
+        <img src="/screenshots/07_history_with_items.jpg" alt="Scan history" loading="lazy" />
+      </div>
+      <span class="phone-label">History</span>
+    </div>
+    <div class="phone-frame center-phone">
+      <div class="phone-shell">
+        <img src="/screenshots/01_generate_screen.jpg" alt="Generate QR code" loading="lazy" />
+      </div>
+      <span class="phone-label">Generate</span>
+    </div>
+    <div class="phone-frame">
+      <div class="phone-shell">
+        <img src="/screenshots/04_scan_result_url.jpg" alt="Scan result" loading="lazy" />
+      </div>
+      <span class="phone-label">Scan Result</span>
+    </div>
+  </div>
+</section>
 
 <section class="cta-section" id="download">
   <h2 class="fade-up">Ready to snap?</h2>
@@ -536,56 +556,41 @@
   <div class="popup" id="popup">
     <button class="popup-close" onclick="closePopup()">✕</button>
 
-    <!-- Step 1: Form -->
-    <div id="popup-form">
-      <h2>Get Early Access</h2>
-      <p class="sub">We'll add you as a tester on Google Play and send you the link within 24 hours.</p>
+    <div class="tick">🎉</div>
+    <h2>You're on the list!</h2>
+    <p class="sub">You've been added as a tester. Click below to install QRSnapify from Google Play.</p>
 
-      <div class="field">
-        <label for="p-name">Full Name</label>
-        <input type="text" id="p-name" placeholder="Your name" required />
-      </div>
-      <div class="field">
-        <label for="p-email">Gmail Address</label>
-        <input type="email" id="p-email" placeholder="yourname@gmail.com" required />
-      </div>
-      <div class="popup-error" id="popup-error"></div>
-      <button class="popup-btn" id="popup-submit" onclick="handleSubmit()">Request Access</button>
+    <a href="https://play.google.com/store/apps/details?id=com.qrsnap.qrsnap" class="play-btn" target="_blank" rel="noopener">
+      <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734c0-.382.218-.72.609-.92zM14.862 13.07l2.313 2.313-8.088 4.588 5.775-6.9zm3.838-2.18l2.038 1.157a1.09 1.09 0 010 1.906l-2.038 1.157-2.545-2.11 2.545-2.11zM9.087 4.033l8.088 4.588-2.313 2.313-5.775-6.9z"/></svg>
+      Open on Google Play
+    </a>
 
-      <!-- FAQ -->
-      <div class="faq">
-        <div class="faq-item">
-          <div class="faq-q" onclick="toggleFaq(this)">Why do we need your Gmail? <span>+</span></div>
-          <div class="faq-a">Google Play's closed testing requires us to manually add each tester's Gmail before they can install the app. We can't just publish a public link — every tester has to be approved one by one.<br><br>That's the only reason we ask. We store it in our private tester sheet, don't share it with anyone, and won't use it for anything other than sending you the access link.</div>
-        </div>
-        <div class="faq-item">
-          <div class="faq-q" onclick="toggleFaq(this)">Why 24 hours? <span>+</span></div>
-          <div class="faq-a">We add testers manually, not automatically. Once you sign up, we review the submission, add your Gmail to Play Console, and send you the access link. This usually happens within a day.</div>
-        </div>
-        <div class="faq-item">
-          <div class="faq-q" onclick="toggleFaq(this)">What happens after you install? <span>+</span></div>
-          <div class="faq-a">Google requires at least 12 testers to run the app for 14 days before we can apply for a public launch. That's it — no surveys, no tasks, just keep the app installed and use it normally.</div>
-        </div>
-      </div>
+    <div class="account-warn">
+      ⚠️ <strong>Multiple Google accounts?</strong> Switch to the Gmail you signed up with on Play Store before clicking the link — otherwise you'll see "Item not found".
     </div>
 
-    <!-- Step 2: Success -->
-    <div class="popup-success" id="popup-success">
-      <div class="tick">🎉</div>
-      <h2>You're on the list!</h2>
+    <div class="deadline-note">
+      ⏳ Keep the app installed until <strong id="deadline-en"></strong> — Google needs 14 days of testing before we can go public.<br><br>
+      ⏳ ऐप को <strong id="deadline-hi"></strong> तक फ़ोन में रखें — Google को public launch से पहले 14 दिन की testing चाहिए।
+    </div>
 
-      <a href="https://play.google.com/store/apps/details?id=com.qrsnap.qrsnap" class="play-btn" target="_blank">
-        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734c0-.382.218-.72.609-.92zM14.862 13.07l2.313 2.313-8.088 4.588 5.775-6.9zm3.838-2.18l2.038 1.157a1.09 1.09 0 010 1.906l-2.038 1.157-2.545-2.11 2.545-2.11zM9.087 4.033l8.088 4.588-2.313 2.313-5.775-6.9z"/></svg>
-        Open on Google Play
-      </a>
-
-      <div class="account-warn">
-        ⚠️ <strong>Multiple Google accounts?</strong> Switch to the Gmail you signed up with on Play Store before clicking the link — otherwise you'll see "Item not found".
+    <!-- FAQ -->
+    <div class="faq">
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Why do I need a Gmail to install? <span>+</span></div>
+        <div class="faq-a">Google Play's closed testing requires us to manually add each tester's Gmail before they can install the app. There's no public link — every tester has to be approved one by one. That's the only reason we ask.</div>
       </div>
-
-      <div class="deadline-note" id="deadline-note">
-        ⏳ Keep the app installed until <strong id="deadline-en2"></strong> — Google needs 14 days of testing before we can go public.<br><br>
-        ⏳ ऐप को <strong id="deadline-hi2"></strong> तक फ़ोन में रखें — Google को public launch से पहले 14 दिन की testing चाहिए।
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Why 14 days? <span>+</span></div>
+        <div class="faq-a">Google requires at least 12 testers to keep the app installed for 14 continuous days before approving a public launch. No surveys, no tasks — just keep the app on your phone and use it normally.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Is the app free? <span>+</span></div>
+        <div class="faq-a">Yes — completely free. No ads, no subscriptions, no hidden payments. Forever.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Which Android version do I need? <span>+</span></div>
+        <div class="faq-a">Android 6.0 (Marshmallow) or higher. Works on most phones made after 2016.</div>
       </div>
     </div>
   </div>
@@ -598,11 +603,11 @@
   document.querySelectorAll('.fade-up').forEach(el => obs.observe(el));
 
   function openPopup() {
-    if (localStorage.getItem('qrsnap_beta_signed')) {
-      document.getElementById('popup-form').style.display = 'none';
-      document.getElementById('popup-success').style.display = 'block';
-      setDeadline();
-    }
+    const d = new Date();
+    d.setDate(d.getDate() + 14);
+    const opts = { day: 'numeric', month: 'long', year: 'numeric' };
+    document.getElementById('deadline-en').textContent = d.toLocaleDateString('en-IN', opts);
+    document.getElementById('deadline-hi').textContent = d.toLocaleDateString('hi-IN', opts);
     document.getElementById('overlay').classList.add('open');
     document.body.style.overflow = 'hidden';
   }
@@ -616,11 +621,6 @@
     if (e.target === document.getElementById('overlay')) closePopup();
   }
 
-  function showError(msg) {
-    const el = document.getElementById('popup-error');
-    el.textContent = msg; el.style.display = 'block';
-  }
-
   function toggleFaq(el) {
     const ans = el.nextElementSibling;
     const span = el.querySelector('span');
@@ -628,44 +628,7 @@
     span.textContent = ans.classList.contains('open') ? '−' : '+';
   }
 
-  function setDeadline() {
-    const d = new Date();
-    d.setDate(d.getDate() + 14);
-    const opts = { day: 'numeric', month: 'long', year: 'numeric' };
-    document.getElementById('deadline-en2').textContent = d.toLocaleDateString('en-IN', opts);
-    document.getElementById('deadline-hi2').textContent = d.toLocaleDateString('hi-IN', opts);
-  }
-
-  async function handleSubmit() {
-    const name = document.getElementById('p-name').value.trim();
-    const email = document.getElementById('p-email').value.trim();
-
-    if (!name) { showError('Please enter your name.'); return; }
-    if (!email.endsWith('@gmail.com')) { showError('Please enter a valid @gmail.com address.'); return; }
-
-    const btn = document.getElementById('popup-submit');
-    btn.disabled = true; btn.textContent = 'Submitting...';
-
-    try {
-      await fetch('https://script.google.com/macros/s/AKfycbxxh_Z_PwPqiLDW_hyjYfPrxpyj-xGU-nR7_WYpgFN9qSsrBDoh144ZCTPgwWdpSsc/exec', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email }),
-        mode: 'no-cors'
-      });
-      localStorage.setItem('qrsnap_beta_signed', '1');
-      document.getElementById('popup-form').style.display = 'none';
-      document.getElementById('popup-success').style.display = 'block';
-      setDeadline();
-    } catch (err) {
-      showError('Something went wrong. Please try again.');
-      btn.disabled = false; btn.textContent = 'Request Access';
-    }
-  }
-
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closePopup(); });
-
-
 </script>
 
 </body>
